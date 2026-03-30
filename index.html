@@ -10,24 +10,21 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         :root { --primary: #F97316; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #1e293b; }
-        
+
         .panel-card { background: white; border-radius: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-        
-        /* Inline Editable Category Name */
+
         .cat-item { cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 13px; }
         .cat-item.active { background: #fffaf7; border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1); }
         .cat-input { background: transparent; border: none; font-weight: 700; width: 100%; outline: none; color: inherit; }
         .cat-input::placeholder { color: #cbd5e1; }
-        
-        /* Phone Mockup */
+
         .phone-case { width: 300px; height: 630px; background: #0f172a; border-radius: 50px; padding: 10px; position: relative; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25); border: 4px solid #1e293b; transition: all 0.3s ease; }
         .phone-screen { width: 100%; height: 100%; background: #000; border-radius: 40px; position: relative; overflow: hidden; }
         #preview-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
         #drag-layer { position: absolute; inset: 0; z-index: 100; cursor: crosshair; touch-action: none; }
-        
+
         .cursor-hand { position: absolute; font-size: 32px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); transform: translate(-5px, -5px); transition: opacity 0.2s; }
-        
-        /* Ripple effect */
+
         .ripple-editor { position: absolute; border: 2px solid var(--primary); border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 85; }
         @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 60px; height: 60px; opacity: 0; } }
 
@@ -38,25 +35,87 @@
         /* Export Modal */
         #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 1000; backdrop-filter: blur(8px); padding: 20px; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
         #modal-overlay.show { display: flex; opacity: 1; }
-        
+
         .step-card-ui { border: 2px solid transparent; transition: all 0.2s; animation: fadeIn 0.3s ease-in-out; }
         .step-card-ui.active { border-color: var(--primary); background: #fffaf7; }
-        
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast Notification */
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0f172a; color: white; padding: 12px 24px; border-radius: 14px; font-weight: 800; font-size: 12px; z-index: 9999; opacity: 0; transition: all 0.3s ease; pointer-events: none; white-space: nowrap; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.success { background: #16a34a; }
+        #toast.warning { background: #d97706; }
+        #toast.error { background: #dc2626; }
+
+        /* Unsaved indicator */
+        #unsaved-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; display: none; animation: pulse-dot 1.5s infinite; }
+        #unsaved-dot.show { display: inline-block; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* File size badge */
+        .size-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+        .size-ok { background: #dcfce7; color: #15803d; }
+        .size-warn { background: #fef9c3; color: #a16207; }
+        .size-danger { background: #fee2e2; color: #b91c1c; }
+
+        /* Sortable drag ghost */
+        .sortable-ghost { opacity: 0.4; }
+        .sortable-drag { opacity: 0.95; box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important; }
+
+        /* Drag handle */
+        .drag-handle { cursor: grab; color: #cbd5e1; transition: color 0.2s; }
+        .drag-handle:hover { color: var(--primary); }
+        .drag-handle:active { cursor: grabbing; }
+
+        /* Coord input */
+        .coord-input { width: 60px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 8px; font-size: 11px; font-weight: 700; outline: none; text-align: center; }
+        .coord-input:focus { border-color: var(--primary); }
+
+        /* Undo/Redo button */
+        .history-btn { width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: #94a3b8; font-size: 13px; }
+        .history-btn:hover:not(:disabled) { background: #fff7ed; border-color: var(--primary); color: var(--primary); }
+        .history-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     </style>
 </head>
 <body class="p-4 md:p-6">
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
     <div class="max-w-7xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200"><i class="fas fa-magic text-white text-xl"></i></div>
+                <div class="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200">
+                    <i class="fas fa-magic text-white text-xl"></i>
+                </div>
                 <div>
-                    <h1 class="text-2xl font-black text-slate-900">NEO <span class="text-orange-500">Guide</span></h1>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-2xl font-black text-slate-900">NEO <span class="text-orange-500">Guide</span></h1>
+                        <span id="unsaved-dot" title="Ada perubahan belum disimpan"></span>
+                    </div>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Editor Step Apps Neobank</p>
                 </div>
             </div>
-            <div class="flex gap-3">
-                <button onclick="exportGuide()" class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center gap-2">
+            <div class="flex gap-3 items-center flex-wrap justify-end">
+                <!-- Undo / Redo -->
+                <div class="flex gap-2">
+                    <button id="btn-undo" onclick="undo()" class="history-btn" title="Undo (Ctrl+Z)" disabled>
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button id="btn-redo" onclick="redo()" class="history-btn" title="Redo (Ctrl+Y)" disabled>
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                <!-- Save / Load Project -->
+                <button onclick="saveProject()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm flex items-center gap-2">
+                    <i class="fas fa-download text-xs"></i> Simpan Proyek
+                </button>
+                <label class="bg-slate-100 text-slate-700 px-5 py-3 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-folder-open text-xs"></i> Buka Proyek
+                    <input type="file" accept=".json" class="hidden" onchange="loadProject(event)">
+                </label>
+                <button onclick="exportGuide()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center gap-2">
                     <i class="fas fa-code"></i> GENERATE HTML
                 </button>
             </div>
@@ -89,6 +148,14 @@
                     <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
                     Geser tangan untuk menentukan titik klik
                 </div>
+                <!-- Manual Coord Input (Mobile Fallback) -->
+                <div class="mt-3 bg-white px-5 py-3 rounded-2xl border shadow-sm flex items-center gap-3 text-[11px] font-bold text-slate-500">
+                    <span>X:</span>
+                    <input type="number" id="coord-x" class="coord-input" min="0" max="300" placeholder="150" oninput="updateCoordManual()">
+                    <span>Y:</span>
+                    <input type="number" id="coord-y" class="coord-input" min="0" max="630" placeholder="300" oninput="updateCoordManual()">
+                    <span class="text-slate-300">px</span>
+                </div>
             </div>
 
             <!-- Editor Langkah -->
@@ -100,13 +167,13 @@
                             <i class="fas fa-plus mr-1"></i> Tambah Step
                         </button>
                     </div>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label class="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-1">Judul Utama Halaman</label>
                             <input type="text" id="main-title" oninput="updateMainTitle(this.value)" placeholder="Contoh: Cara Aktivasi Akun" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-orange-500 focus:bg-white transition-colors">
                         </div>
-                        
+
                         <div id="steps-editor-list" class="space-y-4 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar"></div>
                     </div>
                 </div>
@@ -117,14 +184,26 @@
     <!-- Export Modal -->
     <div id="modal-overlay">
         <div class="bg-white w-full max-w-5xl rounded-[2.5rem] p-8 flex flex-col h-[85vh] shadow-2xl relative transform scale-95 transition-transform duration-300" id="modal-content">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center mb-4">
                 <div>
                     <h3 class="text-2xl font-black text-slate-900">Build Selesai!</h3>
                     <p class="text-slate-400 text-sm font-bold">Salin kode di bawah ini ke file .html untuk membagikan panduan.</p>
                 </div>
-                <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+                <div class="flex items-center gap-3">
+                    <!-- File size indicator -->
+                    <div id="file-size-info" class="text-right">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">Ukuran File</div>
+                        <span id="file-size-badge" class="size-badge size-ok">0 KB</span>
+                    </div>
+                    <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- File size warning -->
+            <div id="size-warning" class="hidden mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs font-bold text-amber-700">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span id="size-warning-text"></span>
             </div>
             <textarea id="output-code" readonly class="w-full flex-grow bg-[#0f172a] text-green-400 border border-slate-700 rounded-2xl p-6 font-mono text-[11px] outline-none shadow-inner leading-relaxed custom-scrollbar"></textarea>
             <div class="mt-6 flex gap-4">
@@ -135,267 +214,513 @@
         </div>
     </div>
 
+    <!-- Load SortableJS untuk drag-reorder -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+
     <script>
-        // State Management
-        let appData = [
-            {
-                name: "Panduan Baru",
-                mainTitle: "Cara Penggunaan Aplikasi",
-                steps: [
-                    { desc: "Klik area yang ditunjuk untuk melanjutkan.", img: "", x: 150, y: 300 }
-                ]
-            }
-        ];
-
-        let currentCat = 0;
-        let currentStep = 0;
-        let dragging = false;
-
-        // Render functions
-        function renderCategories() {
-            const catList = document.getElementById('category-list');
-            catList.innerHTML = appData.map((cat, i) => `
-                <div class="cat-item ${i === currentCat ? 'active' : ''}" onclick="selectCat(${i})">
-                    <input type="text" 
-                           class="cat-input" 
-                           value="${cat.name}" 
-                           oninput="appData[${i}].name = this.value"
-                           onkeydown="if(event.key==='Enter') this.blur()"
-                           onclick="event.stopPropagation()"
-                           placeholder="Nama Panduan">
-                    <div class="flex gap-2">
-                         ${appData.length > 1 ? `<button class="opacity-30 hover:opacity-100 hover:text-red-500 transition-all p-1" onclick="deleteCat(event, ${i})" title="Hapus Kategori"><i class="fas fa-trash text-[11px]"></i></button>` : ''}
-                    </div>
-                </div>
-            `).join('');
+    // ============================================================
+    // STATE MANAGEMENT
+    // ============================================================
+    let appData = [
+        {
+            name: "Panduan Baru",
+            mainTitle: "Cara Penggunaan Aplikasi",
+            steps: [
+                { desc: "Klik area yang ditunjuk untuk melanjutkan.", img: "", x: 150, y: 300 }
+            ]
         }
+    ];
 
-        function renderSteps() {
-            const cat = appData[currentCat];
-            const stepList = document.getElementById('steps-editor-list');
-            
-            stepList.innerHTML = cat.steps.map((s, i) => {
-                // Menghindari memasukkan base64 langsung ke input (mencegah HTML DOM ngelag parah)
-                const isBase64 = s.img.startsWith('data:image');
-                const displayValue = isBase64 ? '✅ Gambar Terunggah (Lokal)' : s.img;
-                
-                return `
-                <div id="step-card-${i}" class="step-card-ui p-4 rounded-2xl bg-white cursor-pointer mb-2 ${i === currentStep ? 'active' : 'border-slate-100'}" onclick="selectStep(${i})">
-                    <div class="flex justify-between items-center mb-3">
+    let currentCat = 0;
+    let currentStep = 0;
+    let dragging = false;
+    let sortableInstance = null;
+
+    // ============================================================
+    // HISTORY (UNDO/REDO)
+    // ============================================================
+    const MAX_HISTORY = 50;
+    let history = [];
+    let historyIndex = -1;
+    let isRestoring = false;
+
+    function snapshotHistory() {
+        if (isRestoring) return;
+        // Hapus redo stack jika ada aksi baru
+        if (historyIndex < history.length - 1) {
+            history = history.slice(0, historyIndex + 1);
+        }
+        history.push(JSON.stringify(appData));
+        if (history.length > MAX_HISTORY) history.shift();
+        historyIndex = history.length - 1;
+        updateHistoryButtons();
+        markUnsaved();
+    }
+
+    function undo() {
+        if (historyIndex <= 0) return;
+        historyIndex--;
+        isRestoring = true;
+        appData = JSON.parse(history[historyIndex]);
+        currentCat = Math.min(currentCat, appData.length - 1);
+        currentStep = Math.min(currentStep, appData[currentCat].steps.length - 1);
+        renderAll();
+        isRestoring = false;
+        updateHistoryButtons();
+        showToast('Undo berhasil', 'default');
+    }
+
+    function redo() {
+        if (historyIndex >= history.length - 1) return;
+        historyIndex++;
+        isRestoring = true;
+        appData = JSON.parse(history[historyIndex]);
+        currentCat = Math.min(currentCat, appData.length - 1);
+        currentStep = Math.min(currentStep, appData[currentCat].steps.length - 1);
+        renderAll();
+        isRestoring = false;
+        updateHistoryButtons();
+        showToast('Redo berhasil', 'default');
+    }
+
+    function updateHistoryButtons() {
+        document.getElementById('btn-undo').disabled = historyIndex <= 0;
+        document.getElementById('btn-redo').disabled = historyIndex >= history.length - 1;
+    }
+
+    // Keyboard shortcut undo/redo
+    document.addEventListener('keydown', (e) => {
+        const tag = document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); redo(); }
+    });
+
+    // ============================================================
+    // UNSAVED CHANGES INDICATOR
+    // ============================================================
+    let hasUnsaved = false;
+
+    function markUnsaved() {
+        hasUnsaved = true;
+        document.getElementById('unsaved-dot').classList.add('show');
+    }
+
+    function markSaved() {
+        hasUnsaved = false;
+        document.getElementById('unsaved-dot').classList.remove('show');
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsaved) {
+            e.preventDefault();
+            e.returnValue = 'Ada perubahan yang belum disimpan. Yakin ingin meninggalkan halaman?';
+        }
+    });
+
+    // ============================================================
+    // LOCALSTORAGE AUTO-SAVE
+    // ============================================================
+    const LS_KEY = 'neo_guide_autosave';
+
+    function autoSave() {
+        try {
+            localStorage.setItem(LS_KEY, JSON.stringify({
+                appData,
+                currentCat,
+                currentStep,
+                savedAt: new Date().toISOString()
+            }));
+        } catch(e) {
+            // localStorage penuh (misal karena gambar base64 besar)
+            console.warn('AutoSave gagal:', e.message);
+        }
+    }
+
+    function loadAutoSave() {
+        try {
+            const saved = localStorage.getItem(LS_KEY);
+            if (!saved) return false;
+            const parsed = JSON.parse(saved);
+            if (parsed.appData && parsed.appData.length > 0) {
+                appData = parsed.appData;
+                currentCat = parsed.currentCat || 0;
+                currentStep = parsed.currentStep || 0;
+                return parsed.savedAt;
+            }
+        } catch(e) {
+            console.warn('Gagal memuat autosave:', e);
+        }
+        return false;
+    }
+
+    // Auto-save setiap 30 detik
+    setInterval(autoSave, 30000);
+
+    // ============================================================
+    // TOAST NOTIFICATION
+    // ============================================================
+    let toastTimer = null;
+    function showToast(msg, type = 'default') {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = 'show ' + (type !== 'default' ? type : '');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { el.className = ''; }, 2500);
+    }
+
+    // ============================================================
+    // SAVE / LOAD PROJECT (JSON File)
+    // ============================================================
+    function saveProject() {
+        const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const dateName = new Date().toISOString().slice(0,10);
+        a.download = `neo-guide-project-${dateName}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        markSaved();
+        showToast('✅ Proyek berhasil disimpan!', 'success');
+    }
+
+    function loadProject(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (!Array.isArray(parsed)) throw new Error('Format tidak valid');
+                appData = parsed;
+                currentCat = 0;
+                currentStep = 0;
+                snapshotHistory();
+                renderAll();
+                markSaved();
+                showToast('✅ Proyek berhasil dimuat!', 'success');
+            } catch(err) {
+                showToast('❌ File tidak valid. Pastikan format JSON benar.', 'error');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // ============================================================
+    // RENDER FUNCTIONS
+    // ============================================================
+    function renderAll() {
+        renderCategories();
+        renderSteps();
+        updatePreview();
+        updateCoordInputs();
+    }
+
+    function renderCategories() {
+        const catList = document.getElementById('category-list');
+        catList.innerHTML = appData.map((cat, i) => `
+            <div class="cat-item ${i === currentCat ? 'active' : ''}" onclick="selectCat(${i})">
+                <input type="text"
+                       class="cat-input"
+                       value="${escapeHtmlAttr(cat.name)}"
+                       oninput="updateCatName(${i}, this.value)"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                       onclick="event.stopPropagation()"
+                       placeholder="Nama Panduan">
+                <div class="flex gap-2">
+                    ${appData.length > 1 ? `<button class="opacity-30 hover:opacity-100 hover:text-red-500 transition-all p-1" onclick="deleteCat(event, ${i})" title="Hapus Kategori"><i class="fas fa-trash text-[11px]"></i></button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderSteps() {
+        const cat = appData[currentCat];
+        const stepList = document.getElementById('steps-editor-list');
+
+        stepList.innerHTML = cat.steps.map((s, i) => {
+            const isBase64 = s.img && s.img.startsWith('data:image');
+            const displayValue = isBase64 ? '✅ Gambar Terunggah (Lokal)' : (s.img || '');
+
+            return `
+            <div id="step-card-${i}" class="step-card-ui p-4 rounded-2xl bg-white cursor-pointer mb-2 ${i === currentStep ? 'active' : 'border-slate-100'}" onclick="selectStep(${i})">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="drag-handle px-1" title="Geser untuk ubah urutan"><i class="fas fa-grip-vertical text-[12px]"></i></span>
                         <span class="text-[9px] font-black uppercase ${i === currentStep ? 'text-orange-500' : 'text-slate-400'} tracking-widest bg-slate-50 px-2 py-1 rounded">Langkah ${i+1}</span>
-                        <div class="flex gap-2">
-                             <button onclick="duplicateStep(event, ${i})" title="Duplikat" class="w-6 h-6 rounded bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center transition-colors"><i class="fas fa-copy text-[10px]"></i></button>
-                             ${cat.steps.length > 1 ? `<button onclick="deleteStep(event, ${i})" title="Hapus" class="w-6 h-6 rounded bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors"><i class="fas fa-trash-alt text-[10px]"></i></button>` : ''}
-                        </div>
                     </div>
-                    
-                    <textarea 
-                        oninput="updateStepDesc(${i}, this.value)" 
-                        placeholder="Instruksi untuk user..." 
-                        class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold mb-3 h-16 resize-none outline-none focus:border-orange-400 focus:bg-white transition-colors">${s.desc}</textarea>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <label class="md:col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg cursor-pointer transition-colors font-bold shadow-sm">
-                            <i class="fas fa-upload text-[10px]"></i>
-                            <span class="text-[9px] font-black uppercase tracking-wider">Upload</span>
-                            <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event, ${i})">
-                        </label>
-                        <input type="text" 
-                               placeholder="Atau paste URL Gambar..." 
-                               value="${displayValue}" 
-                               ${isBase64 ? 'readonly' : ''}
-                               oninput="if(!this.readOnly) updateStepImg(${i}, this.value)" 
-                               class="md:col-span-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-mono outline-none focus:border-orange-400 ${isBase64 ? 'text-green-600 bg-green-50/30' : 'text-slate-600'}">
+                    <div class="flex gap-2">
+                        <button onclick="duplicateStep(event, ${i})" title="Duplikat" class="w-6 h-6 rounded bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center transition-colors"><i class="fas fa-copy text-[10px]"></i></button>
+                        ${cat.steps.length > 1 ? `<button onclick="deleteStep(event, ${i})" title="Hapus" class="w-6 h-6 rounded bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors"><i class="fas fa-trash-alt text-[10px]"></i></button>` : ''}
                     </div>
                 </div>
-            `}).join('');
-            
-            document.getElementById('main-title').value = cat.mainTitle;
-        }
 
-        // Logic functions
-        function updateStepDesc(idx, val) {
-            appData[currentCat].steps[idx].desc = val;
-        }
+                <textarea
+                    oninput="updateStepDesc(${i}, this.value)"
+                    onblur="snapshotHistory()"
+                    placeholder="Instruksi untuk user..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold mb-3 h-16 resize-none outline-none focus:border-orange-400 focus:bg-white transition-colors">${escapeHtml(s.desc)}</textarea>
 
-        function updateStepImg(idx, val) {
-            appData[currentCat].steps[idx].img = val;
-            if (idx === currentStep) updatePreview();
-        }
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <label class="md:col-span-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg cursor-pointer transition-colors font-bold shadow-sm">
+                        <i class="fas fa-upload text-[10px]"></i>
+                        <span class="text-[9px] font-black uppercase tracking-wider">Upload</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event, ${i})">
+                    </label>
+                    <input type="text"
+                           placeholder="Atau paste URL Gambar..."
+                           value="${isBase64 ? '✅ Gambar Terunggah (Lokal)' : escapeHtmlAttr(s.img || '')}"
+                           ${isBase64 ? 'readonly' : ''}
+                           oninput="if(!this.readOnly) { updateStepImg(${i}, this.value); snapshotHistory(); }"
+                           class="md:col-span-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-mono outline-none focus:border-orange-400 ${isBase64 ? 'text-green-600 bg-green-50/30' : 'text-slate-600'}">
+                </div>
+            </div>
+        `}).join('');
 
-        // PERBAIKAN: Fungsi kompresi gambar agar kode Base64 tidak terlalu besar
-        function handleFileUpload(event, stepIdx) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            // Tampilkan state loading
-            const inputField = event.target.parentElement.nextElementSibling;
-            inputField.value = "Memproses gambar...";
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; // Lebar maksimal dikompresi (cukup untuk retina display di width 300px)
-                    let width = img.width;
-                    let height = img.height;
+        document.getElementById('main-title').value = cat.mainTitle;
 
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
-                    }
+        // Init Sortable
+        initSortable();
+    }
 
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Kompresi ke format JPEG kualitas 70%
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    
-                    appData[currentCat].steps[stepIdx].img = compressedBase64;
-                    renderSteps();
-                    updatePreview();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function updatePreview() {
-            const step = appData[currentCat].steps[currentStep];
-            const imgElement = document.getElementById('preview-img');
-            
-            if (step.img) {
-                imgElement.src = step.img;
-                imgElement.classList.remove('opacity-50');
-            } else {
-                imgElement.src = 'https://via.placeholder.com/300x630?text=Belum+ada+gambar';
-                imgElement.classList.add('opacity-50');
+    function initSortable() {
+        const list = document.getElementById('steps-editor-list');
+        if (sortableInstance) sortableInstance.destroy();
+        sortableInstance = Sortable.create(list, {
+            animation: 200,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: (evt) => {
+                const steps = appData[currentCat].steps;
+                const moved = steps.splice(evt.oldIndex, 1)[0];
+                steps.splice(evt.newIndex, 0, moved);
+                currentStep = evt.newIndex;
+                snapshotHistory();
+                renderSteps();
+                updatePreview();
             }
-            
-            const hand = document.getElementById('cursor-preview');
-            hand.style.left = step.x + 'px';
-            hand.style.top = step.y + 'px';
+        });
+    }
 
-            const ripContainer = document.getElementById('ripple-preview-container');
-            ripContainer.innerHTML = `<div class="ripple-editor" style="left:${step.x}px; top:${step.y}px"></div>`;
-        }
+    // ============================================================
+    // LOGIC FUNCTIONS
+    // ============================================================
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
 
-        function selectCat(i) { 
-            currentCat = i; 
-            currentStep = 0; 
-            renderCategories(); 
-            renderSteps(); 
-            updatePreview(); 
-        }
+    function escapeHtmlAttr(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
 
-        function selectStep(i) { 
-            currentStep = i; 
-            document.querySelectorAll('.step-card-ui').forEach((el, idx) => {
-                if (idx === i) {
-                    el.classList.add('active');
-                    el.classList.remove('border-slate-100');
-                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    el.classList.remove('active');
-                    el.classList.add('border-slate-100');
+    function updateCatName(idx, val) {
+        appData[idx].name = val;
+        markUnsaved();
+    }
+
+    function updateStepDesc(idx, val) {
+        appData[currentCat].steps[idx].desc = val;
+        markUnsaved();
+    }
+
+    function updateStepImg(idx, val) {
+        appData[currentCat].steps[idx].img = val;
+        if (idx === currentStep) updatePreview();
+        markUnsaved();
+    }
+
+    function updateMainTitle(val) {
+        appData[currentCat].mainTitle = val;
+        markUnsaved();
+    }
+
+    // Koordinat manual (mobile fallback)
+    function updateCoordManual() {
+        const x = parseInt(document.getElementById('coord-x').value) || 0;
+        const y = parseInt(document.getElementById('coord-y').value) || 0;
+        const step = appData[currentCat].steps[currentStep];
+        step.x = Math.max(0, Math.min(300, x));
+        step.y = Math.max(0, Math.min(630, y));
+        updatePreview();
+        markUnsaved();
+    }
+
+    function updateCoordInputs() {
+        const step = appData[currentCat].steps[currentStep];
+        if (!step) return;
+        document.getElementById('coord-x').value = step.x;
+        document.getElementById('coord-y').value = step.y;
+    }
+
+    // Kompresi gambar
+    function handleFileUpload(event, stepIdx) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const inputField = event.target.closest('label').nextElementSibling;
+        if (inputField) inputField.value = "Memproses gambar...";
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                let width = img.width;
+                let height = img.height;
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
                 }
-            });
-            updatePreview(); 
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                appData[currentCat].steps[stepIdx].img = compressedBase64;
+                snapshotHistory();
+                renderSteps();
+                updatePreview();
+                showToast('✅ Gambar berhasil diunggah', 'success');
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function updatePreview() {
+        const step = appData[currentCat].steps[currentStep];
+        if (!step) return;
+        const imgElement = document.getElementById('preview-img');
+        if (step.img) {
+            imgElement.src = step.img;
+            imgElement.classList.remove('opacity-50');
+        } else {
+            imgElement.src = 'https://via.placeholder.com/300x630?text=Belum+ada+gambar';
+            imgElement.classList.add('opacity-50');
         }
+        const hand = document.getElementById('cursor-preview');
+        hand.style.left = step.x + 'px';
+        hand.style.top = step.y + 'px';
+        const ripContainer = document.getElementById('ripple-preview-container');
+        ripContainer.innerHTML = `<div class="ripple-editor" style="left:${step.x}px; top:${step.y}px"></div>`;
+        updateCoordInputs();
+    }
 
-        function updateMainTitle(val) { appData[currentCat].mainTitle = val; }
+    function selectCat(i) {
+        currentCat = i;
+        currentStep = 0;
+        renderAll();
+    }
 
-        function addCategory() {
-            appData.push({ name: "Panduan Baru", mainTitle: "Judul Panduan", steps: [{ desc: "Klik untuk lanjut.", img: "", x: 150, y: 300 }]});
-            currentCat = appData.length - 1; 
-            renderCategories(); 
-            renderSteps(); 
-            updatePreview();
+    function selectStep(i) {
+        currentStep = i;
+        document.querySelectorAll('.step-card-ui').forEach((el, idx) => {
+            if (idx === i) {
+                el.classList.add('active');
+                el.classList.remove('border-slate-100');
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                el.classList.remove('active');
+                el.classList.add('border-slate-100');
+            }
+        });
+        updatePreview();
+    }
+
+    function addCategory() {
+        appData.push({ name: "Panduan Baru", mainTitle: "Judul Panduan", steps: [{ desc: "Klik untuk lanjut.", img: "", x: 150, y: 300 }]});
+        currentCat = appData.length - 1;
+        snapshotHistory();
+        renderAll();
+    }
+
+    function deleteCat(e, i) {
+        e.stopPropagation();
+        if(confirm("Hapus seluruh panduan ini?")) {
+            appData.splice(i, 1);
+            currentCat = Math.max(0, currentCat - 1);
+            snapshotHistory();
+            renderAll();
         }
+    }
 
-        function deleteCat(e, i) { 
-            e.stopPropagation(); 
-            if(confirm("Hapus seluruh panduan ini?")) { 
-                appData.splice(i, 1); 
-                currentCat = Math.max(0, currentCat - 1); // Pindah ke kategori sebelumnya jika ada
-                renderCategories(); 
-                renderSteps(); 
-                updatePreview(); 
-            } 
+    function addStep() {
+        appData[currentCat].steps.push({ desc: "Langkah baru...", img: "", x: 150, y: 300 });
+        currentStep = appData[currentCat].steps.length - 1;
+        snapshotHistory();
+        renderSteps();
+        updatePreview();
+        setTimeout(() => {
+            const list = document.getElementById('steps-editor-list');
+            list.scrollTop = list.scrollHeight;
+        }, 50);
+    }
+
+    function duplicateStep(e, i) {
+        e.stopPropagation();
+        const copy = JSON.parse(JSON.stringify(appData[currentCat].steps[i]));
+        appData[currentCat].steps.splice(i + 1, 0, copy);
+        currentStep = i + 1;
+        snapshotHistory();
+        renderSteps();
+        updatePreview();
+    }
+
+    function deleteStep(e, i) {
+        e.stopPropagation();
+        appData[currentCat].steps.splice(i, 1);
+        currentStep = Math.max(0, Math.min(currentStep, appData[currentCat].steps.length - 1));
+        snapshotHistory();
+        renderSteps();
+        updatePreview();
+    }
+
+    // ============================================================
+    // DRAG LOGIC (Preview HP)
+    // ============================================================
+    const dragLayer = document.getElementById('drag-layer');
+
+    const handleDragStart = (e) => { dragging = true; moveHand(e); };
+    const handleDragEnd = () => {
+        if (dragging) {
+            dragging = false;
+            snapshotHistory();
         }
+    };
+    const handleDragMove = (e) => { if(dragging) moveHand(e); };
 
-        function addStep() { 
-            // Tambahkan step dengan koordinat default di tengah layar
-            appData[currentCat].steps.push({ desc: "Langkah baru...", img: "", x: 150, y: 300 }); 
-            currentStep = appData[currentCat].steps.length - 1; 
-            renderSteps(); 
-            updatePreview(); 
-            
-            // Scroll otomatis ke paling bawah
-            setTimeout(() => {
-                const list = document.getElementById('steps-editor-list');
-                list.scrollTop = list.scrollHeight;
-            }, 50);
-        }
+    dragLayer.addEventListener('mousedown', handleDragStart);
+    dragLayer.addEventListener('touchstart', (e) => { dragging = true; moveHand(e.touches[0]); }, {passive: false});
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('touchmove', (e) => { if(dragging) { e.preventDefault(); moveHand(e.touches[0]); } }, {passive: false});
+    window.addEventListener('mouseup', handleDragEnd);
+    window.addEventListener('touchend', handleDragEnd);
 
-        function duplicateStep(e, i) {
-            e.stopPropagation();
-            const copy = JSON.parse(JSON.stringify(appData[currentCat].steps[i]));
-            appData[currentCat].steps.splice(i + 1, 0, copy);
-            currentStep = i + 1;
-            renderSteps();
-            updatePreview();
-        }
+    function moveHand(e) {
+        const rect = dragLayer.getBoundingClientRect();
+        let x = Math.round(Math.max(0, Math.min(300, e.clientX - rect.left)));
+        let y = Math.round(Math.max(0, Math.min(630, e.clientY - rect.top)));
+        appData[currentCat].steps[currentStep].x = x;
+        appData[currentCat].steps[currentStep].y = y;
+        updatePreview();
+        markUnsaved();
+    }
 
-        function deleteStep(e, i) { 
-            e.stopPropagation(); 
-            appData[currentCat].steps.splice(i, 1); 
-            // Pastikan jika step terhapus, mundur 1 index atau stay di 0
-            currentStep = Math.max(0, Math.min(currentStep, appData[currentCat].steps.length - 1)); 
-            renderSteps(); 
-            updatePreview(); 
-        }
+    // ============================================================
+    // EXPORT ENGINE — PERBAIKAN: Gunakan btoa encoding aman
+    // ============================================================
+    function exportGuide() {
+        // Encode data ke base64 agar aman dari karakter escape yang merusak HTML
+        const jsonStr = JSON.stringify(appData);
+        const safeDataStr = btoa(unescape(encodeURIComponent(jsonStr)));
 
-        // Dragging Logic
-        const dragLayer = document.getElementById('drag-layer');
-        const handleDragStart = (e) => { dragging = true; moveHand(e); };
-        const handleDragEnd = () => dragging = false;
-        const handleDragMove = (e) => { if(dragging) moveHand(e); };
+        // Hitung ukuran file
+        const estimatedSize = safeDataStr.length;
+        updateFileSizeIndicator(estimatedSize);
 
-        dragLayer.addEventListener('mousedown', handleDragStart);
-        dragLayer.addEventListener('touchstart', (e) => { dragging = true; moveHand(e.touches[0]); }, {passive: false});
-        window.addEventListener('mousemove', handleDragMove);
-        window.addEventListener('touchmove', (e) => { if(dragging) { e.preventDefault(); moveHand(e.touches[0]); } }, {passive: false});
-        window.addEventListener('mouseup', handleDragEnd);
-        window.addEventListener('touchend', handleDragEnd);
-
-        function moveHand(e) {
-            const rect = dragLayer.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY - rect.top;
-            
-            // Batasan drag agar kursor tidak keluar batas layar HP
-            x = Math.max(0, Math.min(300, x));
-            y = Math.max(0, Math.min(630, y));
-            
-            appData[currentCat].steps[currentStep].x = Math.round(x);
-            appData[currentCat].steps[currentStep].y = Math.round(y);
-            updatePreview();
-        }
-
-        // Export Engine
-        function exportGuide() {
-            // PERBAIKAN: Sanitasi escape characters agar JSON.parse aman
-            const safeDataStr = JSON.stringify(appData)
-                                .replace(/\\/g, '\\\\')
-                                .replace(/"/g, '\\"')
-                                .replace(/'/g, "\\'")
-                                .replace(/\n/g, '\\n');
-            
-            const htmlContent = `<!DOCTYPE html>
+        const htmlContent = `<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -426,8 +751,8 @@
     </style>
 </head>
 <body class="pb-12">
-    <div id="cat-tabs" class="flex flex-wrap justify-center gap-3 my-8 md:my-12 w-full max-w-5xl px-6 mx-auto"></div>
-    <main class="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-12 items-start justify-center px-6">
+    <div id="cat-tabs" class="flex flex-wrap justify-center gap-3 w-full max-w-5xl px-6 mx-auto" style="display:none!important"></div>
+    <main id="main-content" class="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-12 items-start justify-center px-6 mt-8 md:mt-12">
         <div class="flex-grow w-full md:w-1/2">
             <h1 id="page-title" class="text-3xl md:text-4xl font-black mb-4 text-slate-900 leading-tight tracking-tight"></h1>
             <div class="flex gap-2 mb-10">
@@ -450,31 +775,44 @@
     <div id="toast-msg">Teks panduan disalin!</div>
 
     <script>
+        // Decode data dari base64 — aman dari semua karakter escape
         const rawDataStr = "${safeDataStr}";
-        const data = JSON.parse(rawDataStr);
+        const data = JSON.parse(decodeURIComponent(escape(atob(rawDataStr))));
         let catIdx = 0, stepIdx = 0;
 
         function notify() { const t = document.getElementById('toast-msg'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
-        
+
         function copyEverything() {
             const text = data[catIdx].steps.map((s,i) => \`Langkah \${i+1}: \${s.desc}\`).join('\\n');
-            const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            notify();
+            navigator.clipboard.writeText(text).then(notify).catch(() => {
+                const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify();
+            });
         }
 
         function copySingle(e, txt, n) {
             e.stopPropagation();
-            const el = document.createElement('textarea'); el.value = \`Langkah \${n}: \${txt}\`; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            notify();
+            navigator.clipboard.writeText(\`Langkah \${n}: \${txt}\`).then(notify).catch(() => {
+                const el = document.createElement('textarea'); el.value = \`Langkah \${n}: \${txt}\`; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify();
+            });
         }
 
         function renderUI() {
             const current = data[catIdx];
             document.getElementById('page-title').innerText = current.mainTitle;
-            
-            document.getElementById('cat-tabs').innerHTML = data.map((c, i) => \`
-                <button onclick="catIdx=\${i}; stepIdx=0; renderUI()" class="category-btn \${catIdx === i ? 'active' : ''}">\${c.name}</button>
-            \`).join('');
+
+            const catTabs = document.getElementById('cat-tabs');
+            const mainContent = document.getElementById('main-content');
+            if (data.length > 1) {
+                catTabs.style.cssText = 'display:flex!important; margin-top:2rem; margin-bottom:2.5rem;';
+                mainContent.style.marginTop = '0';
+                catTabs.innerHTML = data.map((c, i) => \`
+                    <button onclick="catIdx=\${i}; stepIdx=0; renderUI()" class="category-btn \${catIdx === i ? 'active' : ''}">\${c.name}</button>
+                \`).join('');
+            } else {
+                catTabs.style.cssText = 'display:none!important';
+                mainContent.style.marginTop = '3rem';
+                catTabs.innerHTML = '';
+            }
 
             document.getElementById('steps-container').innerHTML = current.steps.map((s, i) => \`
                 <div onclick="stepIdx=\${i}; renderUI()" class="step-card \${stepIdx === i ? 'active' : 'opacity-50'}">
@@ -482,23 +820,21 @@
                     <div class="flex-grow">
                         <p class="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">\${s.desc}</p>
                     </div>
-                    <button onclick="copySingle(event, '\${s.desc.replace(/'/g, "\\\\'")}', \${i+1})" class="text-slate-300 hover:text-orange-500 p-2 transition-colors" title="Salin teks"><i class="fas fa-copy"></i></button>
+                    <button onclick="copySingle(event, \${JSON.stringify(s.desc)}, \${i+1})" class="text-slate-300 hover:text-orange-500 p-2 transition-colors" title="Salin teks"><i class="fas fa-copy"></i></button>
                 </div>
             \`).join('');
 
             document.getElementById('img-holder').innerHTML = current.steps.map((s, i) => {
                 const imgSrc = s.img ? s.img : 'https://via.placeholder.com/300x630?text=Belum+ada+gambar';
-                return \`<img src="\${imgSrc}" class="step-img \${stepIdx === i ? 'active' : ''}" alt="Step Image">\`;
+                return \`<img src="\${imgSrc}" class="step-img \${stepIdx === i ? 'active' : ''}" alt="Step Image" loading="lazy">\`;
             }).join('');
 
             const activeS = current.steps[stepIdx];
             const hand = document.getElementById('moving-hand');
             const rip = document.getElementById('ripple-holder');
-            
             hand.style.left = activeS.x + 'px';
             hand.style.top = activeS.y + 'px';
             hand.classList.add('active');
-
             rip.innerHTML = '';
             setTimeout(() => {
                 rip.innerHTML = \`<div class="ripple-effect" style="left:\${activeS.x}px; top:\${activeS.y}px"></div>\`;
@@ -509,45 +845,86 @@
     <\/script>
 </body>
 </html>`;
-            document.getElementById('output-code').value = htmlContent;
-            
-            // Animasi Modal
-            const modal = document.getElementById('modal-overlay');
-            const content = document.getElementById('modal-content');
-            modal.classList.add('show');
-            setTimeout(() => {
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
-            }, 10);
-        }
 
-        function closeModal() { 
-            const modal = document.getElementById('modal-overlay');
-            const content = document.getElementById('modal-content');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.remove('show'); }, 300);
-        }
+        document.getElementById('output-code').value = htmlContent;
 
-        function copyCode() {
-            const area = document.getElementById('output-code');
-            area.select(); document.execCommand('copy');
-            const btn = document.getElementById('copy-btn');
-            btn.innerHTML = "<i class='fas fa-check-circle'></i> BERHASIL DISALIN!";
-            btn.classList.add('bg-green-500', 'hover:bg-green-600');
-            btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
-            
-            setTimeout(() => { 
-                btn.innerHTML = "<i class='fas fa-copy'></i> SALIN KODE KE CLIPBOARD"; 
-                btn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                btn.classList.add('bg-orange-500', 'hover:bg-orange-600');
-            }, 2500);
-        }
+        const modal = document.getElementById('modal-overlay');
+        const content = document.getElementById('modal-content');
+        modal.classList.add('show');
+        setTimeout(() => {
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
 
-        // Initial Start
-        renderCategories();
-        renderSteps();
-        updatePreview();
+    function updateFileSizeIndicator(byteLength) {
+        const kb = Math.round(byteLength / 1024);
+        const mb = (byteLength / (1024 * 1024)).toFixed(2);
+        const badge = document.getElementById('file-size-badge');
+        const warning = document.getElementById('size-warning');
+        const warningText = document.getElementById('size-warning-text');
+
+        if (kb < 500) {
+            badge.textContent = kb + ' KB';
+            badge.className = 'size-badge size-ok';
+            warning.classList.add('hidden');
+        } else if (kb < 2048) {
+            badge.textContent = mb + ' MB';
+            badge.className = 'size-badge size-warn';
+            warning.classList.remove('hidden');
+            warningText.textContent = `Ukuran file ${mb} MB cukup besar karena gambar embedded. Pertimbangkan menggunakan URL gambar eksternal untuk performa lebih baik.`;
+        } else {
+            badge.textContent = mb + ' MB';
+            badge.className = 'size-badge size-danger';
+            warning.classList.remove('hidden');
+            warningText.textContent = `⚠️ Ukuran file ${mb} MB sangat besar! File mungkin lambat dibuka di browser. Sangat disarankan menggunakan URL gambar eksternal daripada upload lokal.`;
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('modal-overlay');
+        const content = document.getElementById('modal-content');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => { modal.classList.remove('show'); }, 300);
+    }
+
+    function copyCode() {
+        const area = document.getElementById('output-code');
+        navigator.clipboard.writeText(area.value).then(() => {
+            flashCopyBtn();
+        }).catch(() => {
+            area.select();
+            document.execCommand('copy');
+            flashCopyBtn();
+        });
+    }
+
+    function flashCopyBtn() {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = "<i class='fas fa-check-circle'></i> BERHASIL DISALIN!";
+        btn.classList.add('bg-green-500', 'hover:bg-green-600');
+        btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+        setTimeout(() => {
+            btn.innerHTML = "<i class='fas fa-copy'></i> SALIN KODE KE CLIPBOARD";
+            btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            btn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+        }, 2500);
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    (function init() {
+        const savedAt = loadAutoSave();
+        if (savedAt) {
+            const time = new Date(savedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            showToast(`📂 Sesi sebelumnya dipulihkan (${time})`, 'default');
+        }
+        snapshotHistory();
+        renderAll();
+        markSaved();
+    })();
     </script>
 </body>
 </html>
