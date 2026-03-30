@@ -37,6 +37,9 @@
         /* Export Modal */
         #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 1000; backdrop-filter: blur(8px); padding: 20px; align-items: center; justify-content: center; }
         #modal-overlay.show { display: flex; }
+        
+        .step-card-ui { border: 2px solid transparent; transition: all 0.2s; }
+        .step-card-ui.active { border-color: var(--primary); background: #fffaf7; }
     </style>
 </head>
 <body class="p-4 md:p-6">
@@ -143,15 +146,15 @@
         let currentStep = 0;
         let dragging = false;
 
-        function render() {
-            // Render Categories with Inline Editing
+        // Render functions
+        function renderCategories() {
             const catList = document.getElementById('category-list');
             catList.innerHTML = appData.map((cat, i) => `
                 <div class="cat-item ${i === currentCat ? 'active' : ''}" onclick="selectCat(${i})">
                     <input type="text" 
                            class="cat-input" 
                            value="${cat.name}" 
-                           onchange="updateCatName(${i}, this.value)"
+                           oninput="appData[${i}].name = this.value"
                            onkeydown="if(event.key==='Enter') this.blur()"
                            onclick="event.stopPropagation()"
                            placeholder="Nama Panduan">
@@ -160,14 +163,16 @@
                     </div>
                 </div>
             `).join('');
+        }
 
+        function renderSteps() {
             const cat = appData[currentCat];
-            document.getElementById('main-title').value = cat.mainTitle;
-            
-            // Render Steps Editor
             const stepList = document.getElementById('steps-editor-list');
+            
+            // Note: We don't want to wipe the whole innerHTML if we are just typing in a textarea.
+            // But for initial load and adding/removing steps, we render fully.
             stepList.innerHTML = cat.steps.map((s, i) => `
-                <div class="p-4 rounded-2xl border-2 ${i === currentStep ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'} transition-all cursor-pointer mb-2" onclick="selectStep(${i})">
+                <div id="step-card-${i}" class="step-card-ui p-4 rounded-2xl bg-white cursor-pointer mb-2 ${i === currentStep ? 'active' : 'border-slate-100'}" onclick="selectStep(${i})">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-[9px] font-black uppercase ${i === currentStep ? 'text-orange-500' : 'text-slate-400'} tracking-widest">Langkah ${i+1}</span>
                         <div class="flex gap-3">
@@ -176,7 +181,10 @@
                         </div>
                     </div>
                     
-                    <textarea oninput="updateStepData(${i}, 'desc', this.value)" placeholder="Instruksi untuk user..." class="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold mb-3 h-16 resize-none outline-none focus:border-orange-400">${s.desc}</textarea>
+                    <textarea 
+                        oninput="updateStepDesc(${i}, this.value)" 
+                        placeholder="Instruksi untuk user..." 
+                        class="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold mb-3 h-16 resize-none outline-none focus:border-orange-400">${s.desc}</textarea>
                     
                     <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg cursor-pointer transition-colors">
@@ -184,20 +192,23 @@
                             <span class="text-[9px] font-black uppercase">Upload</span>
                             <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event, ${i})">
                         </label>
-                        <input type="text" placeholder="Atau URL..." value="${s.img.startsWith('data:') ? 'Image Uploaded' : s.img}" oninput="updateStepData(${i}, 'img', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 text-[9px] font-mono outline-none focus:border-orange-400">
+                        <input type="text" placeholder="URL Gambar..." value="${s.img.startsWith('data:') ? 'Image Uploaded' : s.img}" oninput="updateStepImg(${i}, this.value)" class="bg-white border border-slate-200 rounded-lg px-2 text-[9px] font-mono outline-none focus:border-orange-400">
                     </div>
                 </div>
             `).join('');
-
-            updatePreview();
+            
+            document.getElementById('main-title').value = cat.mainTitle;
         }
 
-        // Logic
-        function updateCatName(idx, val) {
-            appData[idx].name = val || "Panduan Tanpa Nama";
-            // No full render needed if only updating internal data, 
-            // but we render to keep UI consistent
-            render();
+        // Logic functions
+        function updateStepDesc(idx, val) {
+            appData[currentCat].steps[idx].desc = val;
+            // No full render here to keep focus
+        }
+
+        function updateStepImg(idx, val) {
+            appData[currentCat].steps[idx].img = val;
+            if (idx === currentStep) updatePreview();
         }
 
         function handleFileUpload(event, stepIdx) {
@@ -205,8 +216,9 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                updateStepData(stepIdx, 'img', e.target.result);
-                render();
+                appData[currentCat].steps[stepIdx].img = e.target.result;
+                renderSteps();
+                updatePreview();
             };
             reader.readAsDataURL(file);
         }
@@ -224,43 +236,72 @@
             ripContainer.innerHTML = `<div class="ripple-editor" style="left:${step.x}px; top:${step.y}px"></div>`;
         }
 
-        function selectCat(i) { currentCat = i; currentStep = 0; render(); }
-        function selectStep(i) { currentStep = i; render(); }
+        function selectCat(i) { 
+            currentCat = i; 
+            currentStep = 0; 
+            renderCategories(); 
+            renderSteps(); 
+            updatePreview(); 
+        }
+
+        function selectStep(i) { 
+            currentStep = i; 
+            // Update active states in UI without full re-render
+            document.querySelectorAll('.step-card-ui').forEach((el, idx) => {
+                if (idx === i) {
+                    el.classList.add('active');
+                    el.classList.remove('border-slate-100');
+                } else {
+                    el.classList.remove('active');
+                    el.classList.add('border-slate-100');
+                }
+            });
+            updatePreview(); 
+        }
+
         function updateMainTitle(val) { appData[currentCat].mainTitle = val; }
 
         function addCategory() {
             appData.push({ name: "Panduan Baru", mainTitle: "Judul Panduan", steps: [{ desc: "Klik untuk lanjut.", img: "", x: 150, y: 300 }]});
-            currentCat = appData.length - 1; render();
-            // Focus on the new input
-            setTimeout(() => {
-                const inputs = document.querySelectorAll('.cat-input');
-                inputs[inputs.length - 1].focus();
-                inputs[inputs.length - 1].select();
-            }, 50);
+            currentCat = appData.length - 1; 
+            renderCategories(); 
+            renderSteps(); 
+            updatePreview();
         }
 
-        function deleteCat(e, i) { e.stopPropagation(); if(confirm("Hapus seluruh panduan ini?")) { appData.splice(i, 1); currentCat = 0; render(); } }
+        function deleteCat(e, i) { 
+            e.stopPropagation(); 
+            if(confirm("Hapus seluruh panduan ini?")) { 
+                appData.splice(i, 1); 
+                currentCat = 0; 
+                renderCategories(); 
+                renderSteps(); 
+                updatePreview(); 
+            } 
+        }
+
         function addStep() { 
             appData[currentCat].steps.push({ desc: "Langkah baru...", img: "", x: 150, y: 300 }); 
             currentStep = appData[currentCat].steps.length - 1; 
-            render(); 
+            renderSteps(); 
+            updatePreview(); 
         }
+
         function duplicateStep(e, i) {
             e.stopPropagation();
             const copy = JSON.parse(JSON.stringify(appData[currentCat].steps[i]));
             appData[currentCat].steps.splice(i + 1, 0, copy);
             currentStep = i + 1;
-            render();
+            renderSteps();
+            updatePreview();
         }
+
         function deleteStep(e, i) { 
             e.stopPropagation(); 
             appData[currentCat].steps.splice(i, 1); 
             currentStep = 0; 
-            render(); 
-        }
-        function updateStepData(idx, key, val) { 
-            appData[currentCat].steps[idx][key] = val; 
-            if(key === 'img') updatePreview(); 
+            renderSteps(); 
+            updatePreview(); 
         }
 
         // Dragging Logic
@@ -415,8 +456,10 @@
             setTimeout(() => { document.getElementById('copy-btn').innerHTML = "<i class='fas fa-copy mr-2'></i> SALIN KODE KE CLIPBOARD"; }, 2500);
         }
 
-        // Init
-        render();
+        // Initial Start
+        renderCategories();
+        renderSteps();
+        updatePreview();
     </script>
 </body>
 </html>
