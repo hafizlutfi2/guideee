@@ -1,10 +1,9 @@
-@@ -0,0 +1,373 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neo Prestige - Editor Panduan V4</title>
+    <title>Neo Prestige - Editor Panduan V4.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -14,82 +13,90 @@
         
         .panel-card { background: white; border-radius: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
         
-        /* Category Tabs Editor */
-        .cat-item { cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 13px; }
-        .cat-item.active { background: #fffaf7; border-color: var(--primary); color: var(--primary); }
+        /* Inline Editable Category Name */
+        .cat-item { cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 13px; }
+        .cat-item.active { background: #fffaf7; border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1); }
+        .cat-input { background: transparent; border: none; font-weight: 700; width: 100%; outline: none; color: inherit; }
         
         /* Phone Mockup */
         .phone-case { width: 300px; height: 630px; background: #0f172a; border-radius: 50px; padding: 10px; position: relative; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25); border: 4px solid #1e293b; }
         .phone-screen { width: 100%; height: 100%; background: #000; border-radius: 40px; position: relative; overflow: hidden; }
         #preview-img { width: 100%; height: 100%; object-fit: cover; }
-        #drag-layer { position: absolute; inset: 0; z-index: 100; cursor: crosshair; }
+        #drag-layer { position: absolute; inset: 0; z-index: 100; cursor: crosshair; touch-action: none; }
         
-        .cursor-hand { position: absolute; font-size: 32px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); transform: translate(-5px, -5px); }
+        .cursor-hand { position: absolute; font-size: 32px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); transform: translate(-5px, -5px); transition: opacity 0.2s; }
         
-        /* Ripple effect in editor */
+        /* Ripple effect */
         .ripple-editor { position: absolute; border: 2px solid var(--primary); border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 85; }
         @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 60px; height: 60px; opacity: 0; } }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         /* Export Modal */
         #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 1000; backdrop-filter: blur(8px); padding: 20px; align-items: center; justify-content: center; }
         #modal-overlay.show { display: flex; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-6">
     <div class="max-w-7xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200"><i class="fas fa-camera-retro text-white text-xl"></i></div>
+                <div class="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200"><i class="fas fa-magic text-white text-xl"></i></div>
                 <div>
-                    <h1 class="text-2xl font-black text-slate-900">NEO <span class="text-orange-500">PRESTIGE</span> PRO</h1>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sekarang Mendukung Upload Gambar</p>
+                    <h1 class="text-2xl font-black text-slate-900">NEO <span class="text-orange-500">Guide</span> PRO</h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Editor Step Apps Neobank</p>
                 </div>
             </div>
-            <button onclick="exportGuide()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg active:scale-95">
-                <i class="fas fa-file-export mr-2"></i> GENERATE HTML
-            </button>
+            <div class="flex gap-3">
+                <button onclick="exportGuide()" class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center gap-2">
+                    <i class="fas fa-code"></i> GENERATE HTML
+                </button>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Sidebar Kategori -->
-            <div class="lg:col-span-3">
+            <div class="lg:col-span-3 order-2 lg:order-1">
                 <div class="panel-card p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Koleksi Panduan</h3>
-                        <button onclick="addCategory()" class="text-orange-500 font-bold text-xs hover:scale-110 transition-transform">+ Baru</button>
+                        <button onclick="addCategory()" class="text-orange-500 font-bold text-xs hover:scale-110 transition-transform bg-orange-50 px-3 py-1 rounded-full">+ Baru</button>
                     </div>
                     <div id="category-list" class="space-y-1"></div>
+                    <p class="text-[9px] text-slate-400 mt-4 italic font-medium">* Klik teks nama untuk mengubah</p>
                 </div>
             </div>
 
             <!-- Preview Ponsel -->
-            <div class="lg:col-span-4 flex flex-col items-center">
+            <div class="lg:col-span-4 order-1 lg:order-2 flex flex-col items-center">
                 <div class="phone-case">
                     <div class="phone-screen">
                         <div id="drag-layer"></div>
                         <div id="ripple-preview-container"></div>
                         <i id="cursor-preview" class="fas fa-hand-pointer cursor-hand"></i>
-                        <img id="preview-img" src="" alt="Screen">
+                        <img id="preview-img" src="https://via.placeholder.com/300x630?text=Upload+Gambar" alt="Screen">
                     </div>
                 </div>
                 <div class="mt-4 bg-white px-6 py-3 rounded-2xl border text-[11px] font-bold text-slate-500 shadow-sm flex items-center gap-3">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    Tentukan titik klik dengan menggeser ikon tangan
+                    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                    Geser ikon tangan untuk menentukan area klik
                 </div>
             </div>
 
             <!-- Editor Langkah -->
-            <div class="lg:col-span-5 space-y-6">
-                <div class="panel-card p-8">
+            <div class="lg:col-span-5 order-3 space-y-6">
+                <div class="panel-card p-6 md:p-8">
                     <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 class="font-black text-slate-900 text-lg">Editor Langkah</h2>
-                        <button onclick="addStep()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-orange-500 transition-colors">Tambah Step</button>
+                        <h2 class="font-black text-slate-900 text-lg">Editor Konten</h2>
+                        <button onclick="addStep()" class="bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-orange-500 hover:text-white transition-all">Tambah Step</button>
                     </div>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Judul Utama Halaman</label>
-                            <input type="text" id="main-title" oninput="updateCatTitle(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-orange-500 transition-colors">
+                            <label class="block text-[9px] font-black text-slate-400 uppercase mb-1 ml-1">Judul Utama Halaman</label>
+                            <input type="text" id="main-title" oninput="updateMainTitle(this.value)" placeholder="Contoh: Cara Aktivasi Akun" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-orange-500 transition-colors">
                         </div>
                         
                         <div id="steps-editor-list" class="space-y-4 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar"></div>
@@ -104,8 +111,8 @@
         <div class="bg-white w-full max-w-5xl rounded-[2.5rem] p-8 flex flex-col h-[85vh] shadow-2xl relative">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h3 class="text-2xl font-black text-slate-900">Kode HTML Siap!</h3>
-                    <p class="text-slate-400 text-sm font-bold">Semua gambar telah dikonversi menjadi data internal.</p>
+                    <h3 class="text-2xl font-black text-slate-900">Build Selesai!</h3>
+                    <p class="text-slate-400 text-sm font-bold">Salin kode di bawah ini ke file .html untuk membagikan panduan.</p>
                 </div>
                 <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-slate-100 transition-all">
                     <i class="fas fa-times text-2xl text-slate-300"></i>
@@ -121,12 +128,13 @@
     </div>
 
     <script>
+        // State Management
         let appData = [
             {
-                name: "Contoh Panduan",
-                mainTitle: "Selamat Datang di Editor V4",
+                name: "Panduan Baru",
+                mainTitle: "Cara Penggunaan Aplikasi",
                 steps: [
-                    { desc: "Klik tombol di bawah ini untuk memulai", img: "https://via.placeholder.com/300x600?text=Upload+Gambar+Anda", x: 150, y: 300 }
+                    { desc: "Klik area yang ditunjuk untuk melanjutkan.", img: "https://via.placeholder.com/300x630?text=Upload+Langkah+1", x: 150, y: 300 }
                 ]
             }
         ];
@@ -136,13 +144,19 @@
         let dragging = false;
 
         function render() {
+            // Render Categories with Inline Editing
             const catList = document.getElementById('category-list');
             catList.innerHTML = appData.map((cat, i) => `
                 <div class="cat-item ${i === currentCat ? 'active' : ''}" onclick="selectCat(${i})">
-                    <span class="truncate pr-4">${cat.name}</span>
+                    <input type="text" 
+                           class="cat-input" 
+                           value="${cat.name}" 
+                           onchange="updateCatName(${i}, this.value)"
+                           onkeydown="if(event.key==='Enter') this.blur()"
+                           onclick="event.stopPropagation()"
+                           placeholder="Nama Panduan">
                     <div class="flex gap-2">
-                         <i class="fas fa-edit text-[10px] opacity-40 hover:opacity-100" onclick="renameCat(event, ${i})"></i>
-                         ${appData.length > 1 ? `<i class="fas fa-trash text-[10px] opacity-40 hover:text-red-500" onclick="deleteCat(event, ${i})"></i>` : ''}
+                         ${appData.length > 1 ? `<i class="fas fa-trash text-[10px] opacity-20 hover:opacity-100 hover:text-red-500 p-1" onclick="deleteCat(event, ${i})"></i>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -150,31 +164,27 @@
             const cat = appData[currentCat];
             document.getElementById('main-title').value = cat.mainTitle;
             
+            // Render Steps Editor
             const stepList = document.getElementById('steps-editor-list');
             stepList.innerHTML = cat.steps.map((s, i) => `
-                <div class="p-5 rounded-2xl border-2 ${i === currentStep ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'} transition-all cursor-pointer mb-3" onclick="selectStep(${i})">
+                <div class="p-4 rounded-2xl border-2 ${i === currentStep ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'} transition-all cursor-pointer mb-2" onclick="selectStep(${i})">
                     <div class="flex justify-between items-center mb-3">
-                        <span class="text-[10px] font-black uppercase text-orange-500 tracking-widest">Step ${i+1}</span>
-                        ${cat.steps.length > 1 ? `<button onclick="deleteStep(event, ${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fas fa-trash-alt"></i></button>` : ''}
+                        <span class="text-[9px] font-black uppercase ${i === currentStep ? 'text-orange-500' : 'text-slate-400'} tracking-widest">Langkah ${i+1}</span>
+                        <div class="flex gap-3">
+                             <button onclick="duplicateStep(event, ${i})" title="Duplikat" class="text-slate-300 hover:text-blue-500 transition-colors"><i class="fas fa-copy"></i></button>
+                             ${cat.steps.length > 1 ? `<button onclick="deleteStep(event, ${i})" title="Hapus" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fas fa-trash-alt"></i></button>` : ''}
+                        </div>
                     </div>
                     
-                    <textarea oninput="updateStepData(${i}, 'desc', this.value)" placeholder="Deskripsi langkah..." class="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold mb-3 h-20 resize-none outline-none focus:border-orange-400">${s.desc}</textarea>
+                    <textarea oninput="updateStepData(${i}, 'desc', this.value)" placeholder="Instruksi untuk user..." class="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold mb-3 h-16 resize-none outline-none focus:border-orange-400">${s.desc}</textarea>
                     
-                    <div class="space-y-2">
-                        <!-- URL Input -->
-                        <div class="relative">
-                            <i class="fas fa-link absolute left-3 top-2.5 text-slate-300 text-[10px]"></i>
-                            <input type="text" placeholder="URL Gambar (Opsional)" value="${s.img.startsWith('data:') ? '[Data File Upload]' : s.img}" oninput="updateStepData(${i}, 'img', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 pl-8 text-[10px] font-mono outline-none focus:border-orange-400">
-                        </div>
-                        
-                        <!-- File Upload -->
-                        <div class="flex items-center gap-2">
-                            <label class="flex-grow flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg cursor-pointer transition-colors">
-                                <i class="fas fa-upload text-xs"></i>
-                                <span class="text-[10px] font-black uppercase tracking-wider">Upload File</span>
-                                <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event, ${i})">
-                            </label>
-                        </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg cursor-pointer transition-colors">
+                            <i class="fas fa-upload text-[10px]"></i>
+                            <span class="text-[9px] font-black uppercase">Upload</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event, ${i})">
+                        </label>
+                        <input type="text" placeholder="Atau URL..." value="${s.img.startsWith('data:') ? 'Image Uploaded' : s.img}" oninput="updateStepData(${i}, 'img', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 text-[9px] font-mono outline-none focus:border-orange-400">
                     </div>
                 </div>
             `).join('');
@@ -182,15 +192,21 @@
             updatePreview();
         }
 
-        // Handle File Upload to Base64
+        // Logic
+        function updateCatName(idx, val) {
+            appData[idx].name = val || "Panduan Tanpa Nama";
+            // No full render needed if only updating internal data, 
+            // but we render to keep UI consistent
+            render();
+        }
+
         function handleFileUpload(event, stepIdx) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 updateStepData(stepIdx, 'img', e.target.result);
-                render(); // Re-render to update the input text
+                render();
             };
             reader.readAsDataURL(file);
         }
@@ -198,7 +214,7 @@
         function updatePreview() {
             const step = appData[currentCat].steps[currentStep];
             const imgElement = document.getElementById('preview-img');
-            imgElement.src = step.img || 'https://via.placeholder.com/300x600?text=Upload+Gambar';
+            imgElement.src = step.img || 'https://via.placeholder.com/300x630?text=No+Image';
             
             const hand = document.getElementById('cursor-preview');
             hand.style.left = step.x + 'px';
@@ -210,23 +226,55 @@
 
         function selectCat(i) { currentCat = i; currentStep = 0; render(); }
         function selectStep(i) { currentStep = i; render(); }
-        function updateCatTitle(val) { appData[currentCat].mainTitle = val; }
-        function renameCat(e, i) { e.stopPropagation(); const n = prompt("Nama Kategori:", appData[i].name); if(n) { appData[i].name = n; render(); } }
-        
+        function updateMainTitle(val) { appData[currentCat].mainTitle = val; }
+
         function addCategory() {
-            appData.push({ name: "Kategori Baru", mainTitle: "Judul Halaman", steps: [{ desc: "Langkah pertama...", img: "", x: 150, y: 300 }]});
+            appData.push({ name: "Panduan Baru", mainTitle: "Judul Panduan", steps: [{ desc: "Klik untuk lanjut.", img: "", x: 150, y: 300 }]});
             currentCat = appData.length - 1; render();
+            // Focus on the new input
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('.cat-input');
+                inputs[inputs.length - 1].focus();
+                inputs[inputs.length - 1].select();
+            }, 50);
         }
 
-        function deleteCat(e, i) { e.stopPropagation(); if(confirm("Hapus kategori?")) { appData.splice(i, 1); currentCat = 0; render(); } }
-        function addStep() { appData[currentCat].steps.push({ desc: "Langkah baru...", img: "", x: 150, y: 300 }); currentStep = appData[currentCat].steps.length - 1; render(); }
-        function deleteStep(e, i) { e.stopPropagation(); appData[currentCat].steps.splice(i, 1); currentStep = 0; render(); }
-        function updateStepData(idx, key, val) { appData[currentCat].steps[idx][key] = val; if(key === 'img') updatePreview(); }
+        function deleteCat(e, i) { e.stopPropagation(); if(confirm("Hapus seluruh panduan ini?")) { appData.splice(i, 1); currentCat = 0; render(); } }
+        function addStep() { 
+            appData[currentCat].steps.push({ desc: "Langkah baru...", img: "", x: 150, y: 300 }); 
+            currentStep = appData[currentCat].steps.length - 1; 
+            render(); 
+        }
+        function duplicateStep(e, i) {
+            e.stopPropagation();
+            const copy = JSON.parse(JSON.stringify(appData[currentCat].steps[i]));
+            appData[currentCat].steps.splice(i + 1, 0, copy);
+            currentStep = i + 1;
+            render();
+        }
+        function deleteStep(e, i) { 
+            e.stopPropagation(); 
+            appData[currentCat].steps.splice(i, 1); 
+            currentStep = 0; 
+            render(); 
+        }
+        function updateStepData(idx, key, val) { 
+            appData[currentCat].steps[idx][key] = val; 
+            if(key === 'img') updatePreview(); 
+        }
 
+        // Dragging Logic
         const dragLayer = document.getElementById('drag-layer');
-        dragLayer.onmousedown = (e) => { dragging = true; moveHand(e); };
-        window.onmousemove = (e) => { if(dragging) moveHand(e); };
-        window.onmouseup = () => dragging = false;
+        const handleDragStart = (e) => { dragging = true; moveHand(e); };
+        const handleDragEnd = () => dragging = false;
+        const handleDragMove = (e) => { if(dragging) moveHand(e); };
+
+        dragLayer.addEventListener('mousedown', handleDragStart);
+        dragLayer.addEventListener('touchstart', (e) => { dragging = true; moveHand(e.touches[0]); }, {passive: false});
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('touchmove', (e) => { if(dragging) { e.preventDefault(); moveHand(e.touches[0]); } }, {passive: false});
+        window.addEventListener('mouseup', handleDragEnd);
+        window.addEventListener('touchend', handleDragEnd);
 
         function moveHand(e) {
             const rect = dragLayer.getBoundingClientRect();
@@ -239,6 +287,7 @@
             updatePreview();
         }
 
+        // Export Engine
         function exportGuide() {
             const jsonString = JSON.stringify(appData).replace(/"/g, '&quot;');
             const htmlContent = `<!DOCTYPE html>
@@ -254,13 +303,13 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; padding: 0; overflow-x: hidden; }
         .category-btn { padding: 0.8rem 1.6rem; border-radius: 1.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; background: #ffffff; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.75rem; border: 1px solid #e2e8f0; cursor: pointer; }
         .category-btn.active { background: #F97316; color: white; border-color: #F97316; box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.4); transform: translateY(-2px); }
-        .phone-wrapper { position: relative; width: 310px; height: 620px; background: #0f172a; border-radius: 50px; padding: 10px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.3); border: 5px solid #1e293b; }
+        .phone-wrapper { position: relative; width: 310px; height: 620px; background: #0f172a; border-radius: 50px; padding: 10px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.3); border: 5px solid #1e293b; margin: 0 auto; }
         .phone-display { width: 100%; height: 100%; background: #000; border-radius: 40px; position: relative; overflow: hidden; }
         .step-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: scale(1.08); z-index: 10; pointer-events: none; }
         .step-img.active { opacity: 1; transform: scale(1); z-index: 20; }
-        .step-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #e2e8f0; cursor: pointer; background: #ffffff; border-radius: 1.5rem; display: flex; align-items: center; gap: 18px; padding: 20px; position: relative; }
-        .step-card.active { border-color: #F97316; transform: translateX(12px); background: #fffaf7; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.04); }
-        .step-num { min-width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; transition: all 0.4s; background: #f1f5f9; color: #94a3b8; }
+        .step-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #e2e8f0; cursor: pointer; background: #ffffff; border-radius: 1.5rem; display: flex; align-items: center; gap: 18px; padding: 18px; position: relative; }
+        .step-card.active { border-color: #F97316; transform: translateX(8px); background: #fffaf7; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.04); }
+        .step-num { min-width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; transition: all 0.4s; background: #f1f5f9; color: #94a3b8; }
         .step-card.active .step-num { background: linear-gradient(135deg, #F97316 0%, #FB923C 100%); color: white; transform: rotate(-8deg); box-shadow: 0 8px 15px rgba(249, 115, 22, 0.3); }
         .hand-pointer { position: absolute; z-index: 100; font-size: 40px; color: #F97316; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4)); pointer-events: none; transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; transform: scale(0.5); }
         .hand-pointer.active { opacity: 1; transform: scale(1); }
@@ -271,26 +320,25 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
     </style>
 </head>
-<body>
-    <div id="cat-tabs" class="flex flex-wrap justify-center gap-4 my-12 w-full max-w-5xl px-6 mx-auto"></div>
-    <main class="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-12 items-start justify-center pb-24 px-6">
+<body class="pb-12">
+    <div id="cat-tabs" class="flex flex-wrap justify-center gap-3 my-8 md:my-12 w-full max-w-5xl px-6 mx-auto"></div>
+    <main class="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-12 items-start justify-center px-6">
         <div class="flex-grow w-full md:w-1/2">
-            <h1 id="page-title" class="text-4xl font-black mb-4 text-slate-900 leading-tight tracking-tight"></h1>
-            <button onclick="copyEverything()" class="mb-10 inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white bg-slate-900 px-8 py-4 rounded-2xl hover:bg-orange-600 transition-all shadow-xl active:scale-95">
-                <i class="fas fa-copy"></i> Salin Semua Teks
-            </button>
-            <div id="steps-container" class="space-y-5"></div>
+            <h1 id="page-title" class="text-3xl md:text-4xl font-black mb-4 text-slate-900 leading-tight tracking-tight"></h1>
+            <div class="flex gap-2 mb-10">
+                <button onclick="copyEverything()" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white bg-slate-900 px-6 py-3 rounded-xl hover:bg-orange-600 transition-all shadow-xl active:scale-95">
+                    <i class="fas fa-copy"></i> Salin Semua Teks
+                </button>
+            </div>
+            <div id="steps-container" class="space-y-4"></div>
         </div>
-        <div class="w-full md:w-auto flex flex-col items-center sticky top-12">
+        <div class="w-full md:w-auto flex flex-col items-center sticky top-8">
             <div class="phone-wrapper">
                 <div class="phone-display">
                     <div id="img-holder"></div>
                     <i id="moving-hand" class="fas fa-hand-pointer hand-pointer"></i>
                     <div id="ripple-holder"></div>
                 </div>
-            </div>
-            <div class="mt-8 flex gap-2">
-                
             </div>
         </div>
     </main>
@@ -324,10 +372,10 @@
             \`).join('');
 
             document.getElementById('steps-container').innerHTML = current.steps.map((s, i) => \`
-                <div onclick="stepIdx=\${i}; renderUI()" class="step-card \${stepIdx === i ? 'active' : 'opacity-40'}">
+                <div onclick="stepIdx=\${i}; renderUI()" class="step-card \${stepIdx === i ? 'active' : 'opacity-50'}">
                     <div class="step-num">\${i+1}</div>
                     <div class="flex-grow">
-                        <p class="text-sm font-bold text-slate-700 leading-relaxed">\${s.desc}</p>
+                        <p class="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">\${s.desc}</p>
                     </div>
                     <button onclick="copySingle(event, '\${s.desc.replace(/'/g, "\\\\'")}', \${i+1})" class="text-slate-300 hover:text-orange-500 p-2 transition-colors"><i class="fas fa-copy"></i></button>
                 </div>
@@ -363,10 +411,11 @@
         function copyCode() {
             const area = document.getElementById('output-code');
             area.select(); document.execCommand('copy');
-            document.getElementById('copy-btn').innerHTML = "<i class='fas fa-check-circle mr-2'></i> KODE HTML TERSALIN!";
+            document.getElementById('copy-btn').innerHTML = "<i class='fas fa-check-circle mr-2'></i> KODE BERHASIL DISALIN!";
             setTimeout(() => { document.getElementById('copy-btn').innerHTML = "<i class='fas fa-copy mr-2'></i> SALIN KODE KE CLIPBOARD"; }, 2500);
         }
 
+        // Init
         render();
     </script>
 </body>
