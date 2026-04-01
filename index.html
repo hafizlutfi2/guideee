@@ -25,9 +25,9 @@
         #drag-layer { position: absolute; inset: 0; z-index: 100; cursor: crosshair; touch-action: none; }
 
         /* Kursor Tangan Standard (Diganti Sidik Jari Setengah) */
-        .cursor-hand { position: absolute; font-size: 40px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); margin-left: -20px; margin-top: -20px; transition: opacity 0.2s; }
+        .cursor-hand { position: absolute; font-size: 40px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); margin-left: -20px; margin-top: -20px; transition: opacity 0.2s, color 0.3s ease; }
 
-        .ripple-editor { position: absolute; border: 2px solid var(--primary); border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 85; }
+        .ripple-editor { position: absolute; border: 2px solid var(--primary); border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 85; transition: border-color 0.3s ease; }
         @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 80px; height: 80px; opacity: 0; } }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -118,7 +118,7 @@
                     <input type="file" accept=".json" class="hidden" onchange="loadProject(event)">
                 </label>
                 <button onclick="exportGuide()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center gap-2">
-                    <i class="fas fa-code"></i> GENERATE HTML
+                    <i class="fas fa-bolt text-yellow-400"></i> GENERATE HTML
                 </button>
             </div>
         </header>
@@ -146,12 +146,19 @@
                         <img id="preview-img" src="https://via.placeholder.com/300x630?text=Upload+Gambar" alt="Screen" class="opacity-50">
                     </div>
                 </div>
-                <div class="mt-4 bg-white px-6 py-3 rounded-2xl border text-[11px] font-bold text-slate-500 shadow-sm flex items-center gap-3">
-                    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                    Geser tangan untuk menentukan titik klik
+                
+                <!-- NEW: Panel Aksi Image Export -->
+                <div class="mt-4 w-full flex gap-2">
+                    <button onclick="downloadCurrentFrame()" id="btn-dl-frame" class="flex-1 bg-white hover:bg-orange-50 border border-slate-200 hover:border-orange-300 text-slate-700 hover:text-orange-600 font-bold py-2.5 rounded-2xl text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm">
+                        <i class="fas fa-download"></i> Unduh Frame
+                    </button>
+                    <button onclick="copyCurrentFrame(event)" id="btn-cp-frame" class="flex-1 bg-white hover:bg-orange-50 border border-slate-200 hover:border-orange-300 text-slate-700 hover:text-orange-600 font-bold py-2.5 rounded-2xl text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm">
+                        <i class="fas fa-clipboard"></i> Salin Frame
+                    </button>
                 </div>
+
                 <!-- Manual Coord Input -->
-                <div class="mt-3 bg-white px-5 py-3 rounded-2xl border shadow-sm flex items-center gap-3 text-[11px] font-bold text-slate-500">
+                <div class="mt-3 bg-white w-full px-5 py-3 rounded-2xl border shadow-sm flex justify-center items-center gap-3 text-[11px] font-bold text-slate-500">
                     <span>X:</span>
                     <input type="number" id="coord-x" class="coord-input" min="0" max="300" placeholder="150" oninput="updateCoordManual()">
                     <span>Y:</span>
@@ -251,6 +258,166 @@
     let dragging = false;
     let sortableInstance = null;
     let categoryToDeleteIndex = -1;
+
+    // ============================================================
+    // DYNAMIC COLOR CHECKER
+    // ============================================================
+    let colorCanvas = document.createElement('canvas');
+    let colorCtx = colorCanvas.getContext('2d', {willReadFrequently: true});
+    let lastImgSrc = '';
+
+    function getDynamicCursorColor(imgSrc, x, y, callback) {
+        if (!imgSrc || imgSrc.includes('placeholder.com')) {
+            callback('#F97316'); // Default Orange
+            return;
+        }
+        
+        const processColor = () => {
+            try {
+                const size = 16;
+                const startX = Math.max(0, x - size/2);
+                const startY = Math.max(0, y - size/2);
+                const imgData = colorCtx.getImageData(startX, startY, size, size).data;
+                
+                let r = 0, g = 0, b = 0, count = 0;
+                for(let i=0; i<imgData.length; i+=4) {
+                    if (imgData[i+3] > 0) {
+                        r += imgData[i]; g += imgData[i+1]; b += imgData[i+2]; count++;
+                    }
+                }
+                if (count > 0) { r /= count; g /= count; b /= count; }
+                
+                // Kalkulasi jarak warna dengan Orange (#F97316 -> 249, 115, 22)
+                const dist = Math.sqrt(Math.pow(r - 249, 2) + Math.pow(g - 115, 2) + Math.pow(b - 22, 2));
+                
+                if (dist < 120) { 
+                    const brightness = (r*299 + g*587 + b*114)/1000;
+                    callback(brightness > 130 ? '#0f172a' : '#ffffff');
+                } else {
+                    callback('#F97316');
+                }
+            } catch(e) {
+                callback('#F97316');
+            }
+        };
+
+        if (lastImgSrc !== imgSrc) {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = function() {
+                colorCanvas.width = 300; colorCanvas.height = 630;
+                const imgAspect = img.width / img.height;
+                const containerAspect = 300 / 630;
+                let drawW = 300, drawH = 630, offX = 0, offY = 0;
+                
+                if (imgAspect > containerAspect) {
+                    drawW = 630 * imgAspect; 
+                    drawH = 630;
+                    offX = -(drawW - 300) / 2;
+                } else {
+                    drawH = 300 / imgAspect; 
+                    drawW = 300;
+                    offY = -(drawH - 630) / 2;
+                }
+                colorCtx.clearRect(0, 0, 300, 630);
+                colorCtx.drawImage(img, offX, offY, drawW, drawH);
+                lastImgSrc = imgSrc;
+                processColor();
+            };
+            img.onerror = () => { lastImgSrc = imgSrc; callback('#F97316'); };
+            img.src = imgSrc;
+        } else {
+            processColor(); 
+        }
+    }
+
+    // ============================================================
+    // IMAGE COMPOSITOR (Bakar Ikon ke Gambar)
+    // ============================================================
+    function getMergedImageDataURL(step, callback) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300;
+        canvas.height = 630;
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 300, 630);
+
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            const imgAspect = img.width / img.height;
+            const containerAspect = 300 / 630;
+            let drawW = 300, drawH = 630, offX = 0, offY = 0;
+            if (imgAspect > containerAspect) {
+                drawW = 630 * imgAspect; offX = -(drawW - 300) / 2;
+            } else {
+                drawH = 300 / imgAspect; offY = -(drawH - 630) / 2;
+            }
+            ctx.drawImage(img, offX, offY, drawW, drawH);
+
+            getDynamicCursorColor(step.img, step.x, step.y, (color) => {
+                const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" style="transform: rotate(-45deg);"><path d="M9 18v-3c0-1.66 1.34-3 3-3s3 1.34 3 3v3" /><path d="M5 18v-5c0-3.87 3.13-7 7-7s7 3.13 7 7v5" /><path d="M1 18v-6c0-6.08 4.92-11 11-11s11 4.92 11 11v6" /></svg>`;
+                const svgBlob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
+                const url = URL.createObjectURL(svgBlob);
+                const pImg = new Image();
+                pImg.onload = () => {
+                    // Gambar kursor (dikurangi 20px karena kursor diposisikan di tengah pointer HTML)
+                    ctx.drawImage(pImg, step.x - 20, step.y - 20, 40, 40);
+
+                    // Gambar efek ripple/gelombang statis tipis untuk kejelasan
+                    ctx.beginPath();
+                    ctx.arc(step.x, step.y, 24, 0, 2 * Math.PI);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.6;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+
+                    callback(canvas.toDataURL('image/png'));
+                    URL.revokeObjectURL(url);
+                };
+                pImg.src = url;
+            });
+        };
+        img.onerror = () => { callback(canvas.toDataURL('image/png')); };
+        img.src = step.img || 'https://via.placeholder.com/300x630?text=Upload+Gambar';
+    }
+
+    function downloadCurrentFrame() {
+        const step = appData[currentCat].steps[currentStep];
+        getMergedImageDataURL(step, (dataUrl) => {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `Frame_Langkah_${currentStep + 1}.png`;
+            a.click();
+            showToast('✅ Frame berhasil diunduh', 'success');
+        });
+    }
+
+    function copyCurrentFrame(event) {
+        const step = appData[currentCat].steps[currentStep];
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`;
+
+        getMergedImageDataURL(step, (dataUrl) => {
+            fetch(dataUrl).then(res => res.blob()).then(blob => {
+                try {
+                    navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => {
+                        showToast('✅ Gambar disalin ke clipboard', 'success');
+                        btn.innerHTML = originalText;
+                    }).catch(err => {
+                        showToast('❌ Gagal. Browser menolak akses. Gunakan tombol Unduh.', 'error');
+                        btn.innerHTML = originalText;
+                    });
+                } catch(e) {
+                    showToast('❌ Browser tidak mendukung Clipboard API. Gunakan tombol Unduh.', 'error');
+                    btn.innerHTML = originalText;
+                }
+            });
+        });
+    }
 
     // ============================================================
     // HISTORY (UNDO/REDO)
@@ -453,7 +620,6 @@
 
         stepList.innerHTML = cat.steps.map((s, i) => {
             const isBase64 = s.img && s.img.startsWith('data:image');
-            const displayValue = isBase64 ? '✅ Gambar Terunggah (Lokal)' : (s.img || '');
 
             return `
             <div id="step-card-${i}" class="step-card-ui p-4 rounded-2xl bg-white cursor-pointer mb-2 ${i === currentStep ? 'active' : 'border-slate-100'}" onclick="selectStep(${i})">
@@ -585,7 +751,7 @@
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85); // Sedikit lebih tinggi kualitasnya
                 appData[currentCat].steps[stepIdx].img = compressedBase64;
                 snapshotHistory();
                 renderSteps();
@@ -608,11 +774,17 @@
             imgElement.src = 'https://via.placeholder.com/300x630?text=Belum+ada+gambar';
             imgElement.classList.add('opacity-50');
         }
+        
         const hand = document.getElementById('cursor-preview');
         hand.style.left = step.x + 'px';
         hand.style.top = step.y + 'px';
         const ripContainer = document.getElementById('ripple-preview-container');
-        ripContainer.innerHTML = `<div class="ripple-editor" style="left:${step.x}px; top:${step.y}px"></div>`;
+        
+        getDynamicCursorColor(step.img, step.x, step.y, (color) => {
+            hand.style.color = color;
+            ripContainer.innerHTML = `<div class="ripple-editor" style="left:${step.x}px; top:${step.y}px; border-color: ${color}"></div>`;
+        });
+        
         updateCoordInputs();
     }
 
@@ -644,7 +816,6 @@
         renderAll();
     }
 
-    // Modal Hapus Kategori yang tidak terblokir
     function openConfirmDelete(e, i) {
         e.stopPropagation();
         categoryToDeleteIndex = i;
@@ -733,7 +904,6 @@
 
     function moveHand(e) {
         const rect = dragLayer.getBoundingClientRect();
-        // Area Drag 100% Sesuai Resolusi (300x630)
         let x = Math.round(Math.max(0, Math.min(300, e.clientX - rect.left)));
         let y = Math.round(Math.max(0, Math.min(630, e.clientY - rect.top)));
         appData[currentCat].steps[currentStep].x = x;
@@ -743,7 +913,7 @@
     }
 
     // ============================================================
-    // EXPORT ENGINE (Fixed Lightbox Clicks)
+    // EXPORT ENGINE 
     // ============================================================
     function exportGuide() {
         const jsonStr = JSON.stringify(appData);
@@ -751,8 +921,9 @@
         const estimatedSize = safeDataStr.length;
         updateFileSizeIndicator(estimatedSize);
 
-        // SVG Icons Constants ditambahkan style pointer-events:none agar tidak menghadang klik
         const iconCopy = `<svg style="pointer-events: none;" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+        const iconDownload = `<svg style="pointer-events: none;" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>`;
+        const iconImage = `<svg style="pointer-events: none;" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
         const iconPrev = `<svg style="pointer-events: none;" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>`;
         const iconNext = `<svg style="pointer-events: none;" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>`;
         const iconHand = `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transform: rotate(-45deg);"><path d="M9 18v-3c0-1.66 1.34-3 3-3s3 1.34 3 3v3" /><path d="M5 18v-5c0-3.87 3.13-7 7-7s7 3.13 7 7v5" /><path d="M1 18v-6c0-6.08 4.92-11 11-11s11 4.92 11 11v6" /></svg>`;
@@ -811,24 +982,22 @@
         .step-num { min-width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; transition: all 0.4s; background: #f1f5f9; color: #94a3b8; }
         .step-card.active .step-num { background: linear-gradient(135deg, #F97316 0%, #FB923C 100%); color: white; transform: rotate(-8deg); box-shadow: 0 8px 15px rgba(249, 115, 22, 0.3); }
         
-        .hand-pointer { position: absolute; z-index: 100; font-size: 40px; color: #F97316; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); pointer-events: none; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; margin-left: -20px; margin-top: -20px; transform: scale(0.5); }
+        .hand-pointer { position: absolute; z-index: 100; font-size: 40px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); pointer-events: none; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s ease; opacity: 0; margin-left: -20px; margin-top: -20px; transform: scale(0.5); }
         .hand-pointer.active { opacity: 1; animation: pulse-tap 1.5s infinite ease-in-out; }
         @keyframes pulse-tap { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.85); } }
         
-        .ripple-effect { position: absolute; border: 2px solid #F97316; border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 90; }
+        .ripple-effect { position: absolute; border: 2px solid; border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 90; transition: border-color 0.3s ease; }
         @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 80px; height: 80px; opacity: 0; } }
         
         /* Lightbox CSS & Navigation */
         .lightbox { position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(5px); }
         .lightbox.active { opacity: 1; pointer-events: auto; }
         
-        /* Z-index content harus dibawah tombol agar tidak overlap */
         #lightbox-content { width: 300px; height: 630px; background: #000; transform: scale(0.8); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 40px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); pointer-events: none; overflow: hidden; position: relative; z-index: 100; }
         
         .lightbox-close { position: absolute; top: 20px; right: 20px; color: white; cursor: pointer; padding: 10px; transition: transform 0.2s; z-index: 10000; background: transparent; border: none; }
         .lightbox-close:hover { transform: scale(1.1); }
         
-        /* Z-index tombol sangat tinggi agar pasti di atas gambar yang di-zoom */
         .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.4); transition: all 0.2s; z-index: 10050; backdrop-filter: blur(4px); touch-action: manipulation; }
         .lightbox-nav:hover:not(:disabled) { background: rgba(255,255,255,0.3); transform: translateY(-50%) scale(1.1); }
         .lightbox-nav:disabled { opacity: 0.2; cursor: not-allowed; }
@@ -875,8 +1044,14 @@
             <h1 id="page-title" class="text-3xl md:text-4xl font-black mb-4 text-slate-900 leading-tight tracking-tight">${escapeHtml(initialCat.mainTitle)}</h1>
             
             <div class="flex gap-2 mb-10 flex-wrap">
-                <button onclick="copyEverything()" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white bg-slate-900 px-6 py-3 rounded-xl hover:bg-orange-600 transition-all shadow-xl active:scale-95">
-                    ${iconCopy} Salin Semua Teks
+                <button onclick="copyEverything()" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white bg-slate-900 px-5 py-3 rounded-xl hover:bg-orange-600 transition-all shadow-xl active:scale-95">
+                    ${iconCopy} Salin Teks
+                </button>
+                <button onclick="downloadStepImage()" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-700 bg-white border border-slate-200 px-5 py-3 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+                    ${iconDownload} Unduh Gambar
+                </button>
+                <button onclick="copyStepImage(event)" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-700 bg-white border border-slate-200 px-5 py-3 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+                    ${iconImage} Salin Gambar
                 </button>
             </div>
             
@@ -914,57 +1089,166 @@
         </div>
     </main>
     
-    <!-- Lightbox Zoom Modal (Diobjektifkan agar elemen DOM Tombol berada SETELAH layar HP) -->
+    <!-- Lightbox Zoom Modal -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <div id="lightbox-step-info" class="lightbox-step-info"></div>
-        
-        <!-- Container layar zoom, ditaruh di atas tombol secara hierarki HTML -->
         <div id="lightbox-content" onclick="event.stopPropagation()"></div>
-
-        <!-- Tombol diletakkan di bawah konten agar Z-Index ter-render pada layer paling atas -->
-        <button class="lightbox-close" onclick="closeLightbox()" title="Tutup">
-            ${iconClose}
-        </button>
-        <button id="lb-btn-prev" class="lightbox-nav lightbox-prev" title="Sebelumnya" onclick="handleLbNav(event, -1)">
-            ${iconPrev}
-        </button>
-        <button id="lb-btn-next" class="lightbox-nav lightbox-next" title="Selanjutnya" onclick="handleLbNav(event, 1)">
-            ${iconNext}
-        </button>
-        
+        <button class="lightbox-close" onclick="closeLightbox()" title="Tutup">${iconClose}</button>
+        <button id="lb-btn-prev" class="lightbox-nav lightbox-prev" title="Sebelumnya" onclick="handleLbNav(event, -1)">${iconPrev}</button>
+        <button id="lb-btn-next" class="lightbox-nav lightbox-next" title="Selanjutnya" onclick="handleLbNav(event, 1)">${iconNext}</button>
         <div class="lightbox-hint">Gunakan ◄ ► untuk navigasi atau klik tombol panah.<br>Ketuk area gelap untuk menutup</div>
     </div>
     
-    <div id="toast-msg">Teks panduan disalin!</div>
+    <div id="toast-msg">Notifikasi</div>
 
     <script>
         const rawDataStr = "${safeDataStr}";
         const data = JSON.parse(decodeURIComponent(escape(atob(rawDataStr))));
         let catIdx = 0, stepIdx = 0, lastStepIdx = 0;
         
-        // Simpan SVG dalam variable JS untuk digunakan saat re-render
         const svgs = { copy: \`${iconCopy}\` };
 
-        // Fungsi khusus pengontrol klik Lightbox yang anti-gagal
-        function handleLbNav(e, dir) {
-            e.preventDefault();
-            e.stopPropagation();
-            changeStep(stepIdx + dir);
+        // ==========================================
+        // IMAGE COMPOSITOR (Di-burn On The Fly)
+        // ==========================================
+        let colorCanvas = document.createElement('canvas');
+        let colorCtx = colorCanvas.getContext('2d', {willReadFrequently: true});
+
+        function getDynamicCursorColor(imgSrc, x, y, callback) {
+            if (!imgSrc || imgSrc.includes('placeholder.com')) return callback('#F97316');
+            
+            const processColor = (img) => {
+                try {
+                    const size = 16;
+                    const startX = Math.max(0, x - size/2);
+                    const startY = Math.max(0, y - size/2);
+                    const imgData = colorCtx.getImageData(startX, startY, size, size).data;
+                    
+                    let r = 0, g = 0, b = 0, count = 0;
+                    for(let i=0; i<imgData.length; i+=4) {
+                        if (imgData[i+3] > 0) {
+                            r += imgData[i]; g += imgData[i+1]; b += imgData[i+2]; count++;
+                        }
+                    }
+                    if (count > 0) { r /= count; g /= count; b /= count; }
+                    
+                    const dist = Math.sqrt(Math.pow(r - 249, 2) + Math.pow(g - 115, 2) + Math.pow(b - 22, 2));
+                    if (dist < 120) {
+                        const brightness = (r*299 + g*587 + b*114)/1000;
+                        callback(brightness > 130 ? '#0f172a' : '#ffffff');
+                    } else { callback('#F97316'); }
+                } catch(e) { callback('#F97316'); }
+            };
+
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = function() {
+                colorCanvas.width = 300; colorCanvas.height = 630;
+                const imgAspect = img.width / img.height;
+                const containerAspect = 300 / 630;
+                let drawW = 300, drawH = 630, offX = 0, offY = 0;
+                if (imgAspect > containerAspect) { drawW = 630 * imgAspect; offX = -(drawW - 300) / 2; } 
+                else { drawH = 300 / imgAspect; offY = -(drawH - 630) / 2; }
+                colorCtx.clearRect(0, 0, 300, 630);
+                colorCtx.drawImage(img, offX, offY, drawW, drawH);
+                processColor(img);
+            };
+            img.onerror = () => callback('#F97316');
+            img.src = imgSrc;
         }
 
-        function notify() { const t = document.getElementById('toast-msg'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+        function getMergedImageDataURL(callback) {
+            const step = data[catIdx].steps[stepIdx];
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300; canvas.height = 630;
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,300,630);
+
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => {
+                const imgAspect = img.width / img.height;
+                const containerAspect = 300 / 630;
+                let drawW = 300, drawH = 630, offX = 0, offY = 0;
+                if (imgAspect > containerAspect) { drawW = 630 * imgAspect; offX = -(drawW - 300) / 2; } 
+                else { drawH = 300 / imgAspect; offY = -(drawH - 630) / 2; }
+                ctx.drawImage(img, offX, offY, drawW, drawH);
+
+                getDynamicCursorColor(step.img, step.x, step.y, (color) => {
+                    const svgStr = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" style="transform: rotate(-45deg);"><path d="M9 18v-3c0-1.66 1.34-3 3-3s3 1.34 3 3v3" /><path d="M5 18v-5c0-3.87 3.13-7 7-7s7 3.13 7 7v5" /><path d="M1 18v-6c0-6.08 4.92-11 11-11s11 4.92 11 11v6" /></svg>';
+                    const svgBlob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
+                    const url = URL.createObjectURL(svgBlob);
+                    const pImg = new Image();
+                    pImg.onload = () => {
+                        ctx.drawImage(pImg, step.x - 20, step.y - 20, 40, 40);
+                        ctx.beginPath();
+                        ctx.arc(step.x, step.y, 24, 0, 2 * Math.PI);
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 2;
+                        ctx.globalAlpha = 0.6;
+                        ctx.stroke();
+                        callback(canvas.toDataURL('image/png'));
+                        URL.revokeObjectURL(url);
+                    };
+                    pImg.src = url;
+                });
+            };
+            img.onerror = () => callback(canvas.toDataURL('image/png'));
+            img.src = step.img || 'https://via.placeholder.com/300x630?text=Gambar';
+        }
+
+        function downloadStepImage() {
+            getMergedImageDataURL((dataUrl) => {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = \`Panduan_Langkah_\${stepIdx+1}.png\`;
+                a.click();
+            });
+        }
+
+        function copyStepImage(event) {
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            
+            getMergedImageDataURL((dataUrl) => {
+                fetch(dataUrl).then(res => res.blob()).then(blob => {
+                    try {
+                        navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => {
+                            notify('Gambar beserta sidik berhasil disalin!');
+                            btn.innerHTML = originalContent;
+                        }).catch(() => {
+                            notify('Browser tidak mengizinkan salin gambar. Gunakan tombol Unduh.');
+                            btn.innerHTML = originalContent;
+                        });
+                    } catch(e) {
+                        notify('Browser tidak mendukung Clipboard API.');
+                        btn.innerHTML = originalContent;
+                    }
+                });
+            });
+        }
+
+        function notify(msg) { 
+            const t = document.getElementById('toast-msg'); 
+            t.innerText = msg;
+            t.classList.add('show'); 
+            setTimeout(() => t.classList.remove('show'), 2500); 
+        }
+
+        function handleLbNav(e, dir) { e.preventDefault(); e.stopPropagation(); changeStep(stepIdx + dir); }
 
         function copyEverything() {
             const text = data[catIdx].steps.map((s,i) => \`Langkah \${i+1}: \${s.desc}\`).join('\\n');
-            navigator.clipboard.writeText(text).then(notify).catch(() => {
-                const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify();
+            navigator.clipboard.writeText(text).then(() => notify('Semua teks disalin!')).catch(() => {
+                const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify('Semua teks disalin!');
             });
         }
 
         function copySingle(e, txt, n) {
             e.stopPropagation();
-            navigator.clipboard.writeText(\`Langkah \${n}: \${txt}\`).then(notify).catch(() => {
-                const el = document.createElement('textarea'); el.value = \`Langkah \${n}: \${txt}\`; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify();
+            navigator.clipboard.writeText(\`Langkah \${n}: \${txt}\`).then(() => notify(\`Teks langkah \${n} disalin!\`)).catch(() => {
+                const el = document.createElement('textarea'); el.value = \`Langkah \${n}: \${txt}\`; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify(\`Teks langkah \${n} disalin!\`);
             });
         }
         
@@ -978,10 +1262,7 @@
 
         function changeCat(newCatIdx) {
             if (catIdx === newCatIdx) return;
-            catIdx = newCatIdx;
-            stepIdx = 0;
-            lastStepIdx = -1;
-            
+            catIdx = newCatIdx; stepIdx = 0; lastStepIdx = -1;
             document.querySelectorAll('.category-btn').forEach((btn, i) => {
                 if(i === catIdx) btn.classList.add('active');
                 else btn.classList.remove('active');
@@ -991,8 +1272,7 @@
         
         function changeStep(newStepIdx) {
             if (stepIdx === newStepIdx || newStepIdx < 0 || newStepIdx >= data[catIdx].steps.length) return;
-            lastStepIdx = stepIdx;
-            stepIdx = newStepIdx;
+            lastStepIdx = stepIdx; stepIdx = newStepIdx;
             updateStepUI();
             preloadNextImage();
         }
@@ -1052,7 +1332,6 @@
                 }
             }
 
-            // Update status Bottom Navigation & Lightbox Navigation
             const btnPrev = document.getElementById('btn-prev');
             const btnNext = document.getElementById('btn-next');
             const lbBtnPrev = document.getElementById('lb-btn-prev');
@@ -1088,15 +1367,19 @@
             hand.classList.add('active');
             
             rip.innerHTML = '';
-            setTimeout(() => {
-                rip.innerHTML = \`<div class="ripple-effect" style="left:\${activeS.x}px; top:\${activeS.y}px"></div>\`;
-                notifyIframeResize(); // Memberi tahu parent iframe (Google Sites) setelah transisi
+            
+            getDynamicCursorColor(activeS.img, activeS.x, activeS.y, (color) => {
+                hand.style.color = color;
                 
-                // Refresh isi lightbox jika sedang terbuka
-                if (document.getElementById('lightbox').classList.contains('active')) {
-                    refreshLightbox();
-                }
-            }, 50);
+                setTimeout(() => {
+                    rip.innerHTML = \`<div class="ripple-effect" style="left:\${activeS.x}px; top:\${activeS.y}px; border-color: \${color};"></div>\`;
+                    notifyIframeResize(); 
+                    
+                    if (document.getElementById('lightbox').classList.contains('active')) {
+                        refreshLightbox();
+                    }
+                }, 50);
+            });
         }
         
         function refreshLightbox() {
@@ -1108,13 +1391,10 @@
             document.getElementById('lightbox-step-info').innerText = \`Langkah \${stepIdx + 1} dari \${data[catIdx].steps.length}\`;
         }
         
-        // Fitur Zoom Lightbox
         function openLightbox() {
             const activeImg = document.querySelector('.step-img.active');
             if (activeImg && !activeImg.src.includes('placeholder.com')) {
                 refreshLightbox();
-                
-                // Hitung skala perbesaran responsif - Diperbesar hingga 95% area layar
                 const scaleX = (window.innerWidth * 0.95) / 300;
                 const scaleY = (window.innerHeight * 0.95) / 630;
                 const scale = Math.min(scaleX, scaleY, 3);
@@ -1129,12 +1409,9 @@
         function closeLightbox() {
             document.getElementById('lightbox').classList.remove('active');
             document.getElementById('lightbox-content').style.transform = 'scale(0.8)';
-            setTimeout(() => {
-                document.getElementById('lightbox-content').innerHTML = '';
-            }, 300);
+            setTimeout(() => { document.getElementById('lightbox-content').innerHTML = ''; }, 300);
         }
 
-        // Fitur Auto Resize Iframe
         function notifyIframeResize() {
             if (window.parent && window.parent !== window) {
                 const height = document.documentElement.scrollHeight;
@@ -1143,11 +1420,8 @@
         }
         window.addEventListener('resize', () => setTimeout(notifyIframeResize, 100));
 
-        // Fitur Navigasi Keyboard Tetap Ada
         document.addEventListener('keydown', (e) => {
-            // Tutup lightbox jika menekan Escape
             if (e.key === 'Escape') { closeLightbox(); return; }
-            
             if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                 if (stepIdx < data[catIdx].steps.length - 1) { e.preventDefault(); changeStep(stepIdx + 1); }
             } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -1157,7 +1431,6 @@
 
         updateStepUI(true);
         preloadNextImage();
-        // Trigger resize event awal
         window.onload = notifyIframeResize;
     <\/script>
 </body>
