@@ -18,23 +18,25 @@
         .cat-input { background: transparent; border: none; font-weight: 700; width: 100%; outline: none; color: inherit; }
         .cat-input::placeholder { color: #cbd5e1; }
 
-        .phone-case { width: 300px; height: 630px; background: #0f172a; border-radius: 50px; padding: 10px; position: relative; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25); border: 4px solid #1e293b; transition: all 0.3s ease; }
-        .phone-screen { width: 100%; height: 100%; background: #000; border-radius: 40px; position: relative; overflow: hidden; }
+        /* Standardisasi Ukuran Layar HP untuk Akurasi Koordinat */
+        .phone-case { width: max-content; height: max-content; background: #0f172a; border-radius: 50px; padding: 10px; position: relative; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25); border: 4px solid #1e293b; transition: all 0.3s ease; }
+        .phone-screen { width: 300px; height: 630px; background: #000; border-radius: 40px; position: relative; overflow: hidden; }
         #preview-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
         #drag-layer { position: absolute; inset: 0; z-index: 100; cursor: crosshair; touch-action: none; }
 
-        .cursor-hand { position: absolute; font-size: 32px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); transform: translate(-5px, -5px); transition: opacity 0.2s; }
+        /* Kursor Tangan Standard */
+        .cursor-hand { position: absolute; font-size: 32px; color: var(--primary); z-index: 90; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); margin-left: -10px; margin-top: -5px; transition: opacity 0.2s; }
 
         .ripple-editor { position: absolute; border: 2px solid var(--primary); border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 85; }
-        @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 60px; height: 60px; opacity: 0; } }
+        @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 80px; height: 80px; opacity: 0; } }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Export Modal */
-        #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 1000; backdrop-filter: blur(8px); padding: 20px; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
-        #modal-overlay.show { display: flex; opacity: 1; }
+        /* Modal Basis */
+        .modal-base { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 9999; backdrop-filter: blur(8px); padding: 20px; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .modal-base.show { display: flex; opacity: 1; }
 
         .step-card-ui { border: 2px solid transparent; transition: all 0.2s; animation: fadeIn 0.3s ease-in-out; }
         .step-card-ui.active { border-color: var(--primary); background: #fffaf7; }
@@ -42,7 +44,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Toast Notification */
-        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0f172a; color: white; padding: 12px 24px; border-radius: 14px; font-weight: 800; font-size: 12px; z-index: 9999; opacity: 0; transition: all 0.3s ease; pointer-events: none; white-space: nowrap; }
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0f172a; color: white; padding: 12px 24px; border-radius: 14px; font-weight: 800; font-size: 12px; z-index: 10000; opacity: 0; transition: all 0.3s ease; pointer-events: none; white-space: nowrap; }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         #toast.success { background: #16a34a; }
         #toast.warning { background: #d97706; }
@@ -148,7 +150,7 @@
                     <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
                     Geser tangan untuk menentukan titik klik
                 </div>
-                <!-- Manual Coord Input (Mobile Fallback) -->
+                <!-- Manual Coord Input -->
                 <div class="mt-3 bg-white px-5 py-3 rounded-2xl border shadow-sm flex items-center gap-3 text-[11px] font-bold text-slate-500">
                     <span>X:</span>
                     <input type="number" id="coord-x" class="coord-input" min="0" max="300" placeholder="150" oninput="updateCoordManual()">
@@ -182,7 +184,7 @@
     </div>
 
     <!-- Export Modal -->
-    <div id="modal-overlay">
+    <div id="modal-overlay" class="modal-base">
         <div class="bg-white w-full max-w-5xl rounded-[2.5rem] p-8 flex flex-col h-[85vh] shadow-2xl relative transform scale-95 transition-transform duration-300" id="modal-content">
             <div class="flex justify-between items-center mb-4">
                 <div>
@@ -190,7 +192,6 @@
                     <p class="text-slate-400 text-sm font-bold">Salin kode di bawah ini ke file .html untuk membagikan panduan.</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <!-- File size indicator -->
                     <div id="file-size-info" class="text-right">
                         <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">Ukuran File</div>
                         <span id="file-size-badge" class="size-badge size-ok">0 KB</span>
@@ -200,7 +201,6 @@
                     </button>
                 </div>
             </div>
-            <!-- File size warning -->
             <div id="size-warning" class="hidden mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs font-bold text-amber-700">
                 <i class="fas fa-exclamation-triangle mr-2"></i>
                 <span id="size-warning-text"></span>
@@ -210,6 +210,21 @@
                 <button onclick="copyCode()" id="copy-btn" class="flex-grow bg-orange-500 text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
                     <i class="fas fa-copy"></i> SALIN KODE KE CLIPBOARD
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Category Modal -->
+    <div id="confirm-delete-modal" class="modal-base">
+        <div class="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform" id="confirm-delete-content">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-2xl mb-6 mx-auto">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 mb-2 text-center">Hapus Kategori?</h3>
+            <p class="text-sm text-slate-500 mb-8 font-medium text-center">Panduan ini beserta seluruh langkah di dalamnya akan dihapus permanen. Aksi ini tidak dapat dibatalkan.</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmDelete()" class="flex-1 px-4 py-3 rounded-2xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Batal</button>
+                <button onclick="executeDeleteCat()" class="flex-1 px-4 py-3 rounded-2xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">Ya, Hapus</button>
             </div>
         </div>
     </div>
@@ -235,6 +250,7 @@
     let currentStep = 0;
     let dragging = false;
     let sortableInstance = null;
+    let categoryToDeleteIndex = -1;
 
     // ============================================================
     // HISTORY (UNDO/REDO)
@@ -246,7 +262,6 @@
 
     function snapshotHistory() {
         if (isRestoring) return;
-        // Hapus redo stack jika ada aksi baru
         if (historyIndex < history.length - 1) {
             history = history.slice(0, historyIndex + 1);
         }
@@ -288,7 +303,6 @@
         document.getElementById('btn-redo').disabled = historyIndex >= history.length - 1;
     }
 
-    // Keyboard shortcut undo/redo
     document.addEventListener('keydown', (e) => {
         const tag = document.activeElement.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
@@ -332,7 +346,6 @@
                 savedAt: new Date().toISOString()
             }));
         } catch(e) {
-            // localStorage penuh (misal karena gambar base64 besar)
             console.warn('AutoSave gagal:', e.message);
         }
     }
@@ -354,7 +367,6 @@
         return false;
     }
 
-    // Auto-save setiap 30 detik
     setInterval(autoSave, 30000);
 
     // ============================================================
@@ -370,7 +382,7 @@
     }
 
     // ============================================================
-    // SAVE / LOAD PROJECT (JSON File)
+    // SAVE / LOAD PROJECT
     // ============================================================
     function saveProject() {
         const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
@@ -429,7 +441,7 @@
                        onclick="event.stopPropagation()"
                        placeholder="Nama Panduan">
                 <div class="flex gap-2">
-                    ${appData.length > 1 ? `<button class="opacity-30 hover:opacity-100 hover:text-red-500 transition-all p-1" onclick="deleteCat(event, ${i})" title="Hapus Kategori"><i class="fas fa-trash text-[11px]"></i></button>` : ''}
+                    ${appData.length > 1 ? `<button class="opacity-30 hover:opacity-100 hover:text-red-500 transition-all p-1" onclick="openConfirmDelete(event, ${i})" title="Hapus Kategori"><i class="fas fa-trash text-[11px]"></i></button>` : ''}
                 </div>
             </div>
         `).join('');
@@ -479,8 +491,6 @@
         `}).join('');
 
         document.getElementById('main-title').value = cat.mainTitle;
-
-        // Init Sortable
         initSortable();
     }
 
@@ -536,7 +546,6 @@
         markUnsaved();
     }
 
-    // Koordinat manual (mobile fallback)
     function updateCoordManual() {
         const x = parseInt(document.getElementById('coord-x').value) || 0;
         const y = parseInt(document.getElementById('coord-y').value) || 0;
@@ -554,7 +563,6 @@
         document.getElementById('coord-y').value = step.y;
     }
 
-    // Kompresi gambar
     function handleFileUpload(event, stepIdx) {
         const file = event.target.files[0];
         if (!file) return;
@@ -636,13 +644,38 @@
         renderAll();
     }
 
-    function deleteCat(e, i) {
+    // Modal Hapus Kategori yang tidak terblokir
+    function openConfirmDelete(e, i) {
         e.stopPropagation();
-        if(confirm("Hapus seluruh panduan ini?")) {
-            appData.splice(i, 1);
+        categoryToDeleteIndex = i;
+        const modal = document.getElementById('confirm-delete-modal');
+        const content = document.getElementById('confirm-delete-content');
+        modal.classList.add('show');
+        setTimeout(() => {
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+
+    function closeConfirmDelete() {
+        const modal = document.getElementById('confirm-delete-modal');
+        const content = document.getElementById('confirm-delete-content');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => { 
+            modal.classList.remove('show');
+            categoryToDeleteIndex = -1;
+        }, 300);
+    }
+
+    function executeDeleteCat() {
+        if (categoryToDeleteIndex > -1) {
+            appData.splice(categoryToDeleteIndex, 1);
             currentCat = Math.max(0, currentCat - 1);
             snapshotHistory();
             renderAll();
+            closeConfirmDelete();
+            showToast('✅ Kategori berhasil dihapus', 'default');
         }
     }
 
@@ -700,6 +733,7 @@
 
     function moveHand(e) {
         const rect = dragLayer.getBoundingClientRect();
+        // Area Drag 100% Sesuai Resolusi (300x630)
         let x = Math.round(Math.max(0, Math.min(300, e.clientX - rect.left)));
         let y = Math.round(Math.max(0, Math.min(630, e.clientY - rect.top)));
         appData[currentCat].steps[currentStep].x = x;
@@ -709,76 +743,135 @@
     }
 
     // ============================================================
-    // EXPORT ENGINE — PERBAIKAN: Gunakan btoa encoding aman
+    // EXPORT ENGINE 
     // ============================================================
     function exportGuide() {
-        // Encode data ke base64 agar aman dari karakter escape yang merusak HTML
         const jsonStr = JSON.stringify(appData);
         const safeDataStr = btoa(unescape(encodeURIComponent(jsonStr)));
-
-        // Hitung ukuran file
         const estimatedSize = safeDataStr.length;
         updateFileSizeIndicator(estimatedSize);
+
+        const initialCat = appData[0];
+        let initialStepsHtml = initialCat.steps.map((s, i) => `
+            <div onclick="changeStep(${i})" class="step-card ${i === 0 ? 'active' : 'opacity-50'}" id="step-ui-${i}">
+                <div class="step-num">${i+1}</div>
+                <div class="flex-grow">
+                    <p class="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">${escapeHtml(s.desc)}</p>
+                </div>
+                <button onclick="copySingle(event, '${escapeHtmlAttr(s.desc)}', ${i+1})" class="text-slate-300 hover:text-orange-500 p-2 transition-colors" title="Salin teks"><i class="fas fa-copy"></i></button>
+            </div>
+        `).join('');
+
+        let initialImagesHtml = initialCat.steps.map((s, i) => {
+            const imgSrc = s.img ? s.img : 'https://via.placeholder.com/300x630?text=Belum+ada+gambar';
+            return `<img src="${imgSrc}" class="step-img ${i === 0 ? 'active' : ''}" id="img-ui-${i}" alt="Step ${i+1}" loading="${i === 0 ? 'eager' : 'lazy'}">`;
+        }).join('');
+
+        let catTabsHtml = '';
+        if (appData.length > 1) {
+            catTabsHtml = appData.map((c, i) => `
+                <button onclick="changeCat(${i})" class="category-btn ${i === 0 ? 'active' : ''}" id="cat-btn-${i}">${escapeHtml(c.name)}</button>
+            `).join('');
+        }
 
         const htmlContent = `<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panduan Penggunaan</title>
+    <title>${escapeHtml(initialCat.mainTitle)} - Panduan</title>
+    <meta name="description" content="Panduan langkah demi langkah: ${escapeHtmlAttr(initialCat.mainTitle)}">
     <script src="https://cdn.tailwindcss.com"><\/script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; padding: 0; overflow-x: hidden; }
+        
         .category-btn { padding: 0.8rem 1.6rem; border-radius: 1.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; background: #ffffff; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.75rem; border: 1px solid #e2e8f0; cursor: pointer; }
         .category-btn.active { background: #F97316; color: white; border-color: #F97316; box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.4); transform: translateY(-2px); }
-        .phone-wrapper { position: relative; width: 310px; height: 620px; background: #0f172a; border-radius: 50px; padding: 10px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.3); border: 5px solid #1e293b; margin: 0 auto; }
-        .phone-display { width: 100%; height: 100%; background: #0f172a; border-radius: 40px; position: relative; overflow: hidden; }
-        .step-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: scale(1.08); z-index: 10; pointer-events: none; }
-        .step-img.active { opacity: 1; transform: scale(1); z-index: 20; }
+        
+        /* Akurasi Ukuran Layar 100% Sama dengan Editor */
+        .phone-wrapper { display: inline-block; background: #0f172a; border-radius: 50px; padding: 10px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.3); border: 4px solid #1e293b; margin: 0 auto; }
+        .phone-display { width: 300px; height: 630px; background: #000; border-radius: 40px; position: relative; overflow: hidden; }
+        
+        .step-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: translateX(100%); z-index: 10; pointer-events: none; }
+        .step-img.active { opacity: 1; transform: translateX(0); z-index: 20; }
+        .step-img.exit-left { opacity: 0; transform: translateX(-100%); z-index: 10; }
+        
         .step-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #e2e8f0; cursor: pointer; background: #ffffff; border-radius: 1.5rem; display: flex; align-items: center; gap: 18px; padding: 18px; position: relative; }
         .step-card.active { border-color: #F97316; transform: translateX(8px); background: #fffaf7; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.04); }
         .step-num { min-width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; transition: all 0.4s; background: #f1f5f9; color: #94a3b8; }
         .step-card.active .step-num { background: linear-gradient(135deg, #F97316 0%, #FB923C 100%); color: white; transform: rotate(-8deg); box-shadow: 0 8px 15px rgba(249, 115, 22, 0.3); }
-        .hand-pointer { position: absolute; z-index: 100; font-size: 40px; color: #F97316; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4)); pointer-events: none; transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; transform: scale(0.5); }
+        
+        /* Akurasi Posisi Kursor 100% Sama dengan Editor */
+        .hand-pointer { position: absolute; z-index: 100; font-size: 32px; color: #F97316; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); pointer-events: none; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; margin-left: -10px; margin-top: -5px; transform: scale(0.5); }
         .hand-pointer.active { opacity: 1; transform: scale(1); }
-        .ripple-effect { position: absolute; border: 4px solid #F97316; border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 90; }
-        @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 120px; height: 120px; opacity: 0; } }
-        #toast-msg { visibility: hidden; background: #0f172a; color: #fff; padding: 14px 28px; border-radius: 14px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 2000; font-weight: 800; font-size: 12px; }
+        .ripple-effect { position: absolute; border: 2px solid #F97316; border-radius: 50%; animation: ripple-anim 1.5s infinite; transform: translate(-50%, -50%); pointer-events: none; z-index: 90; }
+        
+        @keyframes ripple-anim { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 80px; height: 80px; opacity: 0; } }
+        
+        #toast-msg { visibility: hidden; background: #0f172a; color: #fff; padding: 14px 28px; border-radius: 14px; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 2000; font-weight: 800; font-size: 12px; }
         #toast-msg.show { visibility: visible; animation: fadeInUp 0.3s ease-out; }
         @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        
+        .hidden-base { display: none !important; }
     </style>
 </head>
-<body class="pb-12">
-    <div id="cat-tabs" class="flex flex-wrap justify-center gap-3 w-full max-w-5xl px-6 mx-auto" style="display:none!important"></div>
-    <main id="main-content" class="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-12 items-start justify-center px-6 mt-8 md:mt-12">
+<body class="pb-12 md:pb-24">
+    <div id="cat-tabs" class="flex flex-wrap justify-center gap-3 w-full max-w-5xl px-6 mx-auto ${appData.length > 1 ? 'mt-8 mb-10' : 'hidden-base'}">
+        ${catTabsHtml}
+    </div>
+    
+    <main id="main-content" class="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-12 items-start justify-center px-6 ${appData.length > 1 ? 'mt-0' : 'mt-12'}">
         <div class="flex-grow w-full md:w-1/2">
-            <h1 id="page-title" class="text-3xl md:text-4xl font-black mb-4 text-slate-900 leading-tight tracking-tight"></h1>
-            <div class="flex gap-2 mb-10">
+            <h1 id="page-title" class="text-3xl md:text-4xl font-black mb-4 text-slate-900 leading-tight tracking-tight">${escapeHtml(initialCat.mainTitle)}</h1>
+            
+            <div class="flex gap-2 mb-10 flex-wrap">
                 <button onclick="copyEverything()" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white bg-slate-900 px-6 py-3 rounded-xl hover:bg-orange-600 transition-all shadow-xl active:scale-95">
                     <i class="fas fa-copy"></i> Salin Semua Teks
                 </button>
             </div>
-            <div id="steps-container" class="space-y-4"></div>
+            
+            <!-- Pre-rendered DOM Content -->
+            <div id="steps-container" class="space-y-4">
+                ${initialStepsHtml}
+            </div>
+
+            <!-- Bar Navigasi Progress Garis -->
+            <div class="mt-10 flex items-center justify-center gap-6">
+                <button id="btn-prev" onclick="changeStep(stepIdx - 1)" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-400 border border-slate-200 hover:text-slate-800 hover:border-slate-300 hover:shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed" title="Sebelumnya">
+                    <i class="fas fa-chevron-left text-sm"></i>
+                </button>
+                
+                <div id="step-indicator" class="flex items-center gap-2">
+                    <!-- Progress bars generated by JS -->
+                </div>
+                
+                <button id="btn-next" onclick="changeStep(stepIdx + 1)" class="w-10 h-10 flex items-center justify-center rounded-full bg-orange-500 text-white hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed" title="Selanjutnya">
+                    <i class="fas fa-chevron-right text-sm"></i>
+                </button>
+            </div>
         </div>
+        
         <div class="w-full md:w-auto flex flex-col items-center sticky top-8">
             <div class="phone-wrapper">
                 <div class="phone-display">
-                    <div id="img-holder"></div>
+                    <div id="img-holder">
+                        ${initialImagesHtml}
+                    </div>
                     <i id="moving-hand" class="fas fa-hand-pointer hand-pointer"></i>
                     <div id="ripple-holder"></div>
                 </div>
             </div>
         </div>
     </main>
+    
     <div id="toast-msg">Teks panduan disalin!</div>
 
     <script>
-        // Decode data dari base64 — aman dari semua karakter escape
         const rawDataStr = "${safeDataStr}";
         const data = JSON.parse(decodeURIComponent(escape(atob(rawDataStr))));
-        let catIdx = 0, stepIdx = 0;
+        let catIdx = 0, stepIdx = 0, lastStepIdx = 0;
 
         function notify() { const t = document.getElementById('toast-msg'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 
@@ -795,27 +888,42 @@
                 const el = document.createElement('textarea'); el.value = \`Langkah \${n}: \${txt}\`; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notify();
             });
         }
+        
+        function preloadNextImage() {
+            const steps = data[catIdx].steps;
+            if (stepIdx + 1 < steps.length && steps[stepIdx + 1].img) {
+                const img = new Image();
+                img.src = steps[stepIdx + 1].img;
+            }
+        }
 
-        function renderUI() {
+        function changeCat(newCatIdx) {
+            if (catIdx === newCatIdx) return;
+            catIdx = newCatIdx;
+            stepIdx = 0;
+            lastStepIdx = -1;
+            
+            document.querySelectorAll('.category-btn').forEach((btn, i) => {
+                if(i === catIdx) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            renderCatContent();
+        }
+        
+        function changeStep(newStepIdx) {
+            if (stepIdx === newStepIdx || newStepIdx < 0 || newStepIdx >= data[catIdx].steps.length) return;
+            lastStepIdx = stepIdx;
+            stepIdx = newStepIdx;
+            updateStepUI();
+            preloadNextImage();
+        }
+
+        function renderCatContent() {
             const current = data[catIdx];
             document.getElementById('page-title').innerText = current.mainTitle;
 
-            const catTabs = document.getElementById('cat-tabs');
-            const mainContent = document.getElementById('main-content');
-            if (data.length > 1) {
-                catTabs.style.cssText = 'display:flex!important; margin-top:2rem; margin-bottom:2.5rem;';
-                mainContent.style.marginTop = '0';
-                catTabs.innerHTML = data.map((c, i) => \`
-                    <button onclick="catIdx=\${i}; stepIdx=0; renderUI()" class="category-btn \${catIdx === i ? 'active' : ''}">\${c.name}</button>
-                \`).join('');
-            } else {
-                catTabs.style.cssText = 'display:none!important';
-                mainContent.style.marginTop = '3rem';
-                catTabs.innerHTML = '';
-            }
-
             document.getElementById('steps-container').innerHTML = current.steps.map((s, i) => \`
-                <div onclick="stepIdx=\${i}; renderUI()" class="step-card \${stepIdx === i ? 'active' : 'opacity-50'}">
+                <div onclick="changeStep(\${i})" class="step-card \${stepIdx === i ? 'active' : 'opacity-50'}" id="step-ui-\${i}">
                     <div class="step-num">\${i+1}</div>
                     <div class="flex-grow">
                         <p class="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">\${s.desc}</p>
@@ -826,28 +934,93 @@
 
             document.getElementById('img-holder').innerHTML = current.steps.map((s, i) => {
                 const imgSrc = s.img ? s.img : 'https://via.placeholder.com/300x630?text=Belum+ada+gambar';
-                return \`<img src="\${imgSrc}" class="step-img \${stepIdx === i ? 'active' : ''}" alt="Step Image" loading="lazy">\`;
+                return \`<img src="\${imgSrc}" class="step-img \${stepIdx === i ? 'active' : ''}" id="img-ui-\${i}" alt="Step Image" loading="lazy">\`;
             }).join('');
+            
+            updateStepUI(true);
+        }
 
-            const activeS = current.steps[stepIdx];
+        function updateStepUI(isCatChange = false) {
+            const currentSteps = data[catIdx].steps;
+            
+            for (let i = 0; i < currentSteps.length; i++) {
+                const card = document.getElementById(\`step-ui-\${i}\`);
+                if (card) {
+                    if (i === stepIdx) {
+                        card.classList.add('active');
+                        card.classList.remove('opacity-50');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        card.classList.remove('active');
+                        card.classList.add('opacity-50');
+                    }
+                }
+            }
+
+            if (!isCatChange && lastStepIdx !== -1) {
+                for (let i = 0; i < currentSteps.length; i++) {
+                    const img = document.getElementById(\`img-ui-\${i}\`);
+                    if (img) {
+                        img.className = 'step-img';
+                        if (i === stepIdx) {
+                            img.classList.add('active');
+                        } else if (i === lastStepIdx && stepIdx > lastStepIdx) {
+                            img.classList.add('exit-left');
+                        } 
+                    }
+                }
+            }
+
+            // Update status Bottom Navigation
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const indicator = document.getElementById('step-indicator');
+            
+            if(btnPrev) btnPrev.disabled = (stepIdx === 0);
+            if(btnNext) btnNext.disabled = (stepIdx === currentSteps.length - 1);
+            
+            if(indicator) {
+                let dots = '';
+                for (let j = 0; j < currentSteps.length; j++) {
+                    if (j === stepIdx) {
+                        dots += '<div class="h-2 w-8 rounded-full bg-orange-500 transition-all duration-300"></div>';
+                    } else {
+                        dots += '<div class="h-2 w-2 rounded-full bg-slate-200 hover:bg-slate-300 cursor-pointer transition-all duration-300" onclick="changeStep(' + j + ')"></div>';
+                    }
+                }
+                indicator.innerHTML = dots;
+            }
+
+            const activeS = currentSteps[stepIdx];
             const hand = document.getElementById('moving-hand');
             const rip = document.getElementById('ripple-holder');
+            
             hand.style.left = activeS.x + 'px';
             hand.style.top = activeS.y + 'px';
             hand.classList.add('active');
+            
             rip.innerHTML = '';
             setTimeout(() => {
                 rip.innerHTML = \`<div class="ripple-effect" style="left:\${activeS.x}px; top:\${activeS.y}px"></div>\`;
             }, 50);
         }
 
-        renderUI();
+        // Fitur Navigasi Keyboard Tetap Ada Tanpa Text Info
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                if (stepIdx < data[catIdx].steps.length - 1) { e.preventDefault(); changeStep(stepIdx + 1); }
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                if (stepIdx > 0) { e.preventDefault(); changeStep(stepIdx - 1); }
+            }
+        });
+
+        updateStepUI(true);
+        preloadNextImage();
     <\/script>
 </body>
 </html>`;
 
         document.getElementById('output-code').value = htmlContent;
-
         const modal = document.getElementById('modal-overlay');
         const content = document.getElementById('modal-content');
         modal.classList.add('show');
